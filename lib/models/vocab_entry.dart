@@ -1,5 +1,4 @@
-/// One vocabulary item. Mirrors the VB.NET `VocabEntry` structure, with the
-/// old Category replaced by the Word Pack the word belongs to ([packId]).
+/// One vocabulary item. [packId] is the Word Pack the word belongs to.
 class VocabEntry {
   final String sectionName;
   final String packId;

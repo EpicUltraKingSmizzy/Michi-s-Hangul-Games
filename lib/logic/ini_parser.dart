@@ -6,8 +6,8 @@ import '../models/vocab_entry.dart';
 /// Format: `[Section]` headers followed by `key = value` lines. Keys are
 /// case-insensitive: english1, english2, emoji, korean1, korean2, pack,
 /// alsopacks (comma-separated extra packs, ids or names), isfullphrase.
-/// The original `category` key is still read and converted to
-/// a Word Pack (see [packIdForIni]); `pack` (id or name) wins if both appear. Blank lines and lines starting with `;` or `#` are skipped.
+/// The home pack comes from `pack` (see [packIdForIni]). Blank lines and
+/// lines starting with `;` or `#` are skipped.
 List<VocabEntry> parseIni(String content) {
   final entries = <VocabEntry>[];
   // Strip a UTF-8 BOM if present.
@@ -39,8 +39,6 @@ List<VocabEntry> parseIni(String content) {
           current.korean1 = val;
         case 'korean2':
           current.korean2 = val;
-        case 'category':
-          current.category = val;
         case 'pack':
           current.pack = val;
         case 'alsopacks':
@@ -58,13 +56,13 @@ List<VocabEntry> parseIni(String content) {
 class _Builder {
   final String section;
   String english1 = '', english2 = '', emoji = '', korean1 = '', korean2 = '';
-  String category = '', pack = '';
+  String pack = '';
   final List<String> alsoPacks = [];
   bool isFullPhrase = false;
   _Builder(this.section);
 
   VocabEntry build() {
-    final home = packIdForIni(pack: pack, category: category, isFullPhrase: isFullPhrase);
+    final home = packIdForIni(pack: pack, isFullPhrase: isFullPhrase);
     final extra = <String>[];
     for (final p in alsoPacks) {
       final id = builtInPackIdFor(p);

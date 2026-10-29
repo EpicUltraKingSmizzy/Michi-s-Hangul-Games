@@ -15,7 +15,6 @@ void main() {
         'KOREAN1=고양이\n'
         'korean2 = 냥이\n'
         'Emoji = 🐱\n'
-        'Category = Animal\n'
         'IsFullPhrase = True\n'
         'not a key value line\n'
         '\n'
@@ -286,14 +285,13 @@ void main() {
     }
   });
 
-  test('Pack = key (id or name) wins; legacy Category = still converts', () {
+  test('Pack = key accepts id or name; unknown or missing goes to Grab Bag', () {
     final e = parseIni(
       '[A]\nenglish1 = a\nkorean1 = 가\npack = Food\n'
-      '[B]\nenglish1 = b\nkorean1 = 나\nPack = animals\ncategory = Time\n'
-      '[C]\nenglish1 = c\nkorean1 = 다\ncategory = time\n'
-      '[D]\nenglish1 = d\nkorean1 = 라\ncategory = Nope\n'
-      '[E]\nenglish1 = e\nkorean1 = 마\npack = nonsense\ncategory = Animal\n',
+      '[B]\nenglish1 = b\nkorean1 = 나\nPack = animals\n'
+      '[C]\nenglish1 = c\nkorean1 = 다\npack = nonsense\n'
+      '[D]\nenglish1 = d\nkorean1 = 라\n',
     );
-    expect(e.map((x) => x.packId), ['food', 'animals', 'time', 'grabbag', 'animals']);
+    expect(e.map((x) => x.packId), ['food', 'animals', 'grabbag', 'grabbag']);
   });
 }
