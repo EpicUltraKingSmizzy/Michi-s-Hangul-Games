@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'pick_format.dart';
 
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
+
+import 'support/vocab.dart';
 
 TypingRound typing(String a1, [String a2 = '']) => TypingRound(
   prompt: 'x',
@@ -21,7 +21,7 @@ TypingRound typing(String a1, [String a2 = '']) => TypingRound(
 );
 
 void main() {
-  final vocab = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+  final vocab = diskVocab();
 
   group('answer checking', () {
     test('spaces are ignored and Korean2 is accepted', () {

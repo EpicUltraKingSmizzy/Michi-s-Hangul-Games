@@ -1,17 +1,17 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/vocab.dart';
+
 /// t46u (v11): 👨‍👩‍👧 Family and 🧑‍🤝‍🧑 Who's Who no longer overlap; the
 /// abstract people words moved out; Orange (fruit) / Orange (color).
-final _all = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+final _all = diskVocab();
 
 VocabEntry _k(String korean) => _all.singleWhere((e) => e.korean1 == korean);
 

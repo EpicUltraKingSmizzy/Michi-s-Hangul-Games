@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'pick_format.dart';
 
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/main.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:hangul_hooray/screens/game_screen.dart';
@@ -17,11 +15,13 @@ import 'package:hangul_hooray/screens/options_screen.dart';
 import 'package:hangul_hooray/widgets/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/vocab.dart';
+
 // Dart supports this property at runtime; the analyzer's checker does not.
 // ignore: valid_regexps
 final _emoji = RegExp(r'\p{Extended_Pictographic}', unicode: true);
 
-List<VocabEntry> _builtIn() => parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+List<VocabEntry> _builtIn() => diskVocab();
 
 List<String> _shown(Object r) => switch (r) {
   ChoiceRound c => [c.prompt, ...c.options],

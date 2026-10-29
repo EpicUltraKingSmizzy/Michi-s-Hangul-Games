@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,8 +6,9 @@ import 'pick_format.dart';
 
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
+
+import 'support/vocab.dart';
 
 String? subj(VocabEntry e) => GameEngine.actionHeroSubject(e);
 
@@ -18,7 +18,7 @@ String enSubject(String shown) => shown.trim().split(' ').first;
 const enFor = {'저는': 'I', '그는': 'He', '그녀는': 'She'};
 
 void main() {
-  final vocab = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+  final vocab = diskVocab();
   final heroes = vocab.where((e) => e.inPack(actionHeroesBundleId)).toList();
 
   test('🏃 Action Heroes: 27 cards per pronoun, every card has one', () {

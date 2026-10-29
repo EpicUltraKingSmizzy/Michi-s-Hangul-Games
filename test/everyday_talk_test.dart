@@ -1,15 +1,15 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final _all = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+import 'support/vocab.dart';
+
+final _all = diskVocab();
 final _talk = _all.where((e) => e.packId == 'everyday-talk').toList();
 
 VocabEntry _byKorean(String k, [String? pack]) =>

@@ -4,9 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/vocab.dart';
 
 /// t54u (v13): Michi, Michel-André and Nicole left the built-in 👨‍👩‍👧 Family
 /// pack and are seeded once into ✏️ My Words, spelled the family's way.
@@ -36,7 +37,7 @@ void main() {
 
   group('data', () {
     test('the names are gone from the INI and Family', () {
-      final all = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+      final all = diskVocab();
       for (final (en, _) in _names) {
         expect(all.where((e) => e.english1 == en), isEmpty, reason: en);
       }

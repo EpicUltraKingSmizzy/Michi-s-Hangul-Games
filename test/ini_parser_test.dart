@@ -1,9 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
+
+import 'support/vocab.dart';
 
 void main() {
   test('parses sections, keys, comments and booleans', () {
@@ -23,32 +23,32 @@ void main() {
         'english2 = Second\n'
         'korean1 = 가\n'
         'isfullphrase = yes\n';
-    final e = parseIni(ini);
+    final e = parseIni(ini, packId: 'animals');
     expect(e.length, 2);
     expect(e[0].sectionName, 'Entry_1');
     expect(e[0].english1, 'Cat');
     expect(e[0].korean1, '고양이');
     expect(e[0].korean2, '냥이');
     expect(e[0].emoji, '🐱');
-    expect(e[0].packId, 'phrases'); // full phrases live in Handy Phrases
+    expect(e[0].packId, 'animals'); // home pack = the file the word is in
     expect(e[0].isFullPhrase, isTrue);
     expect(e[1].english1, 'a = b'); // split on the first '=' only
     expect(e[1].english2, 'Second');
     expect(e[1].isFullPhrase, isFalse); // "yes" isn't a .NET boolean
-    expect(e[1].packId, 'grabbag');
+    expect(e[1].packId, 'animals');
   });
 
   test('keys before any section are ignored', () {
-    expect(parseIni('english1 = x\nkorean1 = y\n'), isEmpty);
+    expect(parseIni('english1 = x\nkorean1 = y\n', packId: 'food'), isEmpty);
   });
 
   test("parses the user's bundled vocab file", () {
-    final entries = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+    final entries = diskVocab();
     // + 412 top-500 nouns (v9) − 3 family names, now seeded My Words (v13)
     expect(entries.length, 566 + 412 - 3 + 24); // v15: +24 🗨️ Everyday Talk
-    expect(entries.first.sectionName, 'Entry_00000');
-    expect(entries.first.english1, 'Spider');
-    expect(entries.first.korean1, '거미');
+    expect(entries.first.packId, builtInBundles.first.id);
+    final spider = entries.singleWhere((e) => e.sectionName == 'Entry_00000');
+    expect([spider.packId, spider.english1, spider.korean1], ['animals', 'Spider', '거미']);
     expect(entries.every((e) => e.korean1.isNotEmpty && e.english1.isNotEmpty), isTrue);
     expect(entries.where((e) => e.isFullPhrase).length, 24 + 24);
 
@@ -90,7 +90,7 @@ void main() {
   });
 
   test('Handy Phrases have no emoji; Emotions holds the feeling words', () {
-    final entries = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+    final entries = diskVocab();
     final phrases = entries.where((e) => e.packId == 'phrases').toList();
     expect(phrases, hasLength(24));
     expect(phrases.where((e) => e.emoji.isNotEmpty), isEmpty);
@@ -117,7 +117,7 @@ void main() {
   test('vocab corrections are in the bundled copy', () {
     // The original word list (the top-500 noun packs reuse a few English
     // words, e.g. 부모 "Parents" next to 부모님).
-    final entries = parseIni(File('assets/korean_vocab.ini').readAsStringSync())
+    final entries = diskVocab()
         .where((e) => !defaultOffBundles.difference({phrasesBundleId}).contains(e.packId))
         .toList();
     VocabEntry byEn(String en) => entries.singleWhere((e) => e.english1 == en);
@@ -162,9 +162,7 @@ void main() {
     expect(byEn('Sword').emoji, '🗡️');
     expect(byEn('Burrito').emoji, '🌯');
     expect(
-      parseIni(File('assets/korean_vocab.ini').readAsStringSync())
-          .where((e) => e.emoji.isNotEmpty)
-          .length,
+      diskVocab().where((e) => e.emoji.isNotEmpty).length,
       66 + 124 + 2 + 12 + 7 + 27 - 1 + 20 - 7 + 67 + 36 - 1,
     ); // + Lock, Thought, colours, weekdays, round 5; − Appointment; + round 8; − 7 Handy Phrases emojis; + 67 emoji-only English1 moved to Emoji (v8); + 36 noun emojis (v9); − 💪 Strength (v10)
     // Round 4.
@@ -285,13 +283,18 @@ void main() {
     }
   });
 
-  test('Pack = key accepts id or name; unknown or missing goes to Grab Bag', () {
-    final e = parseIni(
-      '[A]\nenglish1 = a\nkorean1 = 가\npack = Food\n'
-      '[B]\nenglish1 = b\nkorean1 = 나\nPack = animals\n'
-      '[C]\nenglish1 = c\nkorean1 = 다\npack = nonsense\n'
-      '[D]\nenglish1 = d\nkorean1 = 라\n',
-    );
-    expect(e.map((x) => x.packId), ['food', 'animals', 'grabbag', 'grabbag']);
+  test('pack header and AlsoPacks (id or name) resolve; [Pack] is not a word', () {
+    const text =
+        '[Pack]\nId = demo\nEmoji = 🧪\nName = Demo\nBlurb = Hi = there\nDefaultOn = false\n'
+        '[A]\nenglish1 = a\nkorean1 = 가\nAlsoPacks = food, Animals, demo, nope\n';
+    final h = parsePackHeader(text)!;
+    expect([h.id, h.emoji, h.name, h.blurb, h.defaultOn], ['demo', '🧪', 'Demo', 'Hi = there', false]);
+    final saved = builtInBundles;
+    addTearDown(() => setBuiltInBundles(saved));
+    String read(String id) => id == 'demo' ? text : '[Pack]\nId = $id\nName = $id\n';
+    final e = loadBuiltInVocab('demo\nfood\nanimals', read);
+    expect(e.single.sectionName, 'A');
+    expect(e.single.packId, 'demo');
+    expect(e.single.alsoPacks, ['food', 'animals']);
   });
 }

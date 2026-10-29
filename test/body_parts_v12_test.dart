@@ -1,14 +1,13 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/vocab.dart';
+
 /// t53u (v12): every body part left 💓 Heart & Body for 🦵 Body Parts.
-final _all = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+final _all = diskVocab();
 
 VocabEntry _s(String section) => _all.singleWhere((e) => e.sectionName == section);
 

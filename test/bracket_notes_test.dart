@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'pick_format.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
-import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/main.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
 import 'package:hangul_hooray/screens/bundles_screen.dart';
@@ -18,8 +16,10 @@ import 'package:hangul_hooray/screens/game_screen.dart';
 import 'package:hangul_hooray/screens/options_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/vocab.dart';
+
 /// t44u: 💪 off 힘 Strength, and the ⚙️ 📑 Bracket notes option.
-final _all = parseIni(File('assets/korean_vocab.ini').readAsStringSync());
+final _all = diskVocab();
 
 VocabEntry _w(String korean, String english) =>
     _all.singleWhere((e) => e.korean1 == korean && e.english1 == english);

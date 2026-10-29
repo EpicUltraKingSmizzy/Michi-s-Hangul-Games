@@ -169,8 +169,11 @@ class AppState extends ChangeNotifier {
     game3Repetitions = _clampReps(
       _prefs.getInt(kGame3Repetitions) ?? GameEngine.defaultGame3Repetitions,
     );
-    final ini = await rootBundle.loadString('assets/korean_vocab.ini');
-    builtIn = parseIni(ini);
+    final index = await rootBundle.loadString(vocabIndexAsset);
+    final packTexts = {
+      for (final id in parsePackIndex(index)) id: await rootBundle.loadString(packAsset(id)),
+    };
+    builtIn = loadBuiltInVocab(index, (id) => packTexts[id]!);
     _originalBySection
       ..clear()
       ..addEntries(builtIn.map((e) => MapEntry(e.sectionName, e)));
