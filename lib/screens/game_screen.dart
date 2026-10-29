@@ -20,10 +20,29 @@ import '../widgets/time_art.dart';
 import 'bundles_screen.dart';
 import 'shuffle_games_screen.dart';
 
+part 'games/choice_game.dart';
+part 'games/color_game.dart';
+part 'games/link_up_game.dart';
+part 'games/number_game.dart';
+part 'games/syllable_game.dart';
+part 'games/time_game.dart';
+part 'games/typing_game.dart';
+
 const _green = Color(0xFF3DDC84);
 const _red = Color(0xFFFF4D4D);
 const _ink = Color(0xFF3A1D5C);
 const _textShadow = [Shadow(color: Color(0x99000000), offset: Offset(0, 1.5), blurRadius: 3)];
+
+const _optionPalette = [Color(0xFF7B5CFF), Color(0xFF00B4FF), Color(0xFFFF9F1C)];
+
+const _helperPalette = [
+  Color(0xFFFF5C8A),
+  Color(0xFF7B5CFF),
+  Color(0xFF00B4FF),
+  Color(0xFF2EC4B6),
+  Color(0xFFFF9F1C),
+  Color(0xFFE040FB),
+];
 
 class GameScreen extends StatefulWidget {
   /// The game (1-10); 0 for 🔀 Shuffle.
@@ -114,6 +133,9 @@ class _GameScreenState extends State<GameScreen> {
   TileSlots? get tileSlots => _slots;
   @visibleForTesting
   (int, int)? get wrongLine => _wrongLine;
+
+  /// [setState] for the per-game parts (extensions can't call it directly).
+  void _update(VoidCallback fn) => setState(fn);
 
   @override
   void initState() {
@@ -312,264 +334,7 @@ class _GameScreenState extends State<GameScreen> {
 
   Future<void> _delay() => Future<void>.delayed(WinPause.quick);
 
-  // ---------------------------------------------------------------- choice
-
-  Future<void> _onOption(ChoiceRound r, int i) async {
-    if (_locked) return;
-    if (r.options[i] == r.correctAnswer) {
-      setState(() => _optionColors[i] = _green);
-      await _win();
-    } else {
-      _miss();
-      setState(() {
-        _optionColors[i] = _red;
-        _shake++;
-        _cheer = pick(oopsCheers, _rand);
-        _cheerId++;
-      });
-    }
-  }
-
-  Future<void> _onColor(ColorRound r, int i) async {
-    if (_locked) return;
-    if (r.options[i].id == r.target.id) {
-      setState(() => _optionColors[i] = _green);
-      await _win();
-    } else {
-      _miss();
-      setState(() {
-        _optionColors[i] = _red;
-        _shake++;
-        _cheer = pick(oopsCheers, _rand);
-        _cheerId++;
-      });
-    }
-  }
-
-  // ---------------------------------------------------------------- Link Up
-
-  bool _spotLocked(LinkSpot s) => s.left ? _links!.leftLocked(s.row) : _links!.rightLocked(s.row);
-
-  void _linkDown(LinkSpot? s, Offset at) {
-    if (_locked || _links == null || s == null || _spotLocked(s)) return;
-    setState(() {
-      _dragFrom = s;
-      _dragTo = at;
-    });
-  }
-
-  void _linkMove(Offset at) {
-    if (_dragFrom != null) setState(() => _dragTo = at);
-  }
-
-  /// A line dropped on a card in the other column links the two (dragging
-  /// works either way). Lifting on the same card is a tap: it picks the card,
-  /// and a tap on a card in the other column links it to the picked one.
-  void _linkUp(LinkSpot? s, Offset at) {
-    final from = _dragFrom;
-    if (from == null) return;
-    setState(() {
-      _dragFrom = null;
-      _dragTo = null;
-    });
-    if (_locked || s == null) return;
-    if (s.left != from.left) {
-      setState(() => _linkPick = null);
-      _tryLink(from, s);
-    } else if (s == from) {
-      final pick = _linkPick;
-      if (pick != null && pick.left != s.left) {
-        setState(() => _linkPick = null);
-        _tryLink(pick, s);
-      } else {
-        setState(() => _linkPick = pick == s ? null : s);
-      }
-    }
-  }
-
-  /// A right line locks in (in its own colour; the Korean is read aloud);
-  /// the sixth one wins the board. A wrong line flashes red for a second,
-  /// buzzes and disappears, and breaks the streak like any wrong answer.
-  Future<void> _tryLink(LinkSpot a, LinkSpot b) async {
-    final r = _round;
-    final board = _links;
-    if (r is! LinkRound || board == null || _locked) return;
-    final left = a.left ? a.row : b.row;
-    final right = a.left ? b.row : a.row;
-    switch (board.tryLink(left, right)) {
-      case LinkResult.ignored:
-        return;
-      case LinkResult.wrong:
-        _miss();
-        _wrongTimer?.cancel();
-        setState(() {
-          _wrongLine = (left, right);
-          _shake++;
-          _cheer = pick(oopsCheers, _rand);
-          _cheerId++;
-        });
-        final id = _roundId;
-        _wrongTimer = Timer(LinkRound.wrongFlash, () {
-          if (mounted && id == _roundId) setState(() => _wrongLine = null);
-        });
-      case LinkResult.linked:
-        final korean = r.leftText(left);
-        if (_wrongLine case (final l, final rr) when l == left || rr == right) {
-          _wrongTimer?.cancel();
-          _wrongLine = null;
-        }
-        if (board.complete) {
-          setState(() {});
-          await _win(entered: korean);
-          return;
-        }
-        if (appState.vibration) Buzz.right();
-        if (appState.spokenAnswer) unawaited(Speaker.instance.speak(korean));
-        setState(() {
-          _cheer = pick(linkCheers, _rand);
-          _cheerId++;
-        });
-    }
-  }
-
-  // ---------------------------------------------------------------- typing
-
-  Future<void> _submit(TypingRound r) async {
-    if (_locked) return;
-    final id = _roundId;
-    final entered = _input.text;
-    if (isTypedAnswerCorrect(entered, r)) {
-      setState(() => _fieldFlash = _green);
-      if (r.repetitions == 1 || _reps + 1 == r.repetitions) {
-        if (r.repetitions > 1) setState(() => _reps++);
-        await _win(entered: entered);
-        return;
-      }
-      // 3️⃣ repetition: buzz + speak, but don't hold up the next attempt.
-      setState(() => _locked = true);
-      if (appState.vibration) Buzz.right();
-      if (appState.spokenAnswer) {
-        unawaited(Speaker.instance.speak(_spokenAnswer(r, entered: entered)));
-      }
-      await _delay();
-      if (!mounted || id != _roundId) return;
-      setState(() {
-        _reps++;
-        _fieldFlash = null;
-        _locked = false;
-        _input.value = TextEditingValue.empty;
-        _hintVisible = false;
-      });
-      _focus.requestFocus();
-    } else {
-      _miss();
-      setState(() {
-        _fieldFlash = _red;
-        _shake++;
-      });
-      await _delay();
-      if (mounted && id == _roundId) setState(() => _fieldFlash = null);
-    }
-  }
-
-  /// Typed rounds check every text change, so a right answer wins without ✔.
-  /// Partial or wrong text is never marked wrong here; only ✔ / Enter does that.
-  void _onTyped(TypingRound r) {
-    if (_locked || !isTypedAnswerCorrect(_input.text, r)) return;
-    _endComposition();
-    _submit(r);
-  }
-
-  /// Commit Gboard's in-progress syllable (the composing region) without
-  /// changing the text, in one atomic value update, so the IME finishes its
-  /// composition cleanly before the field is locked / cleared.
-  void _endComposition() {
-    final v = _input.value;
-    if (!v.composing.isValid || v.composing.isCollapsed) return;
-    _input.value = TextEditingValue(
-      text: v.text,
-      selection: TextSelection.collapsed(offset: v.text.length),
-    );
-  }
-
-  /// Keypad digit (7️⃣/8️⃣ digit rounds).
-  Future<void> _onDigit(TypingRound r, String d) async {
-    if (_locked || _input.text.length >= 12) return;
-    _setInput(_input.text + d);
-    if (isHelperAnswerComplete(_input.text, r)) {
-      setState(() => _fieldFlash = _green);
-      await _win(entered: _input.text);
-    } else {
-      setState(() {});
-    }
-  }
-
-  /// Tile tapped (5️⃣/6️⃣): it drops into the first empty slot.
-  Future<void> _onTile(TypingRound r, int tile) async {
-    final slots = _slots;
-    if (_locked || slots == null || slots.place(tile) < 0) return;
-    setState(() {});
-    final syllable = r.charButtons[tile];
-    if (shouldSpeakSyllable(
-      syllable,
-      winsNow: slots.isFull && isTypedAnswerCorrect(slots.text, r),
-      spokenAnswer: appState.spokenAnswer,
-    )) {
-      unawaited(Speaker.instance.speak(syllable));
-    }
-    await _checkSlots(r);
-  }
-
-  // ---------------------------------------------------------------- 🕒 time
-
-  /// 🕒 tile tapped: into the first empty slot, then check.
-  Future<void> _onTimeTile(TimeRound r, int tile) async {
-    final slots = _slots;
-    if (_locked || slots == null || slots.place(tile) < 0) return;
-    setState(() {});
-    final syllable = r.tiles[tile];
-    final done = isTimeBuilt(r, slots.text);
-    if (shouldSpeakSyllable(
-      syllable,
-      winsNow: done && (!r.showSky || _period == r.period),
-      spokenAnswer: appState.spokenAnswer,
-    )) {
-      unawaited(Speaker.instance.speak(syllable));
-    }
-    await _checkTime(r);
-  }
-
-  /// 🕒 오전 / 오후 tapped.
-  Future<void> _onPeriod(TimeRound r, String p) async {
-    if (_locked) return;
-    setState(() => _period = p);
-    await _checkTime(r);
-  }
-
-  /// Wins when the syllables say the time (반 counts for :30, which needs
-  /// fewer slots) and, in sky rounds, the right 오전 / 오후 is picked.
-  /// Full slots that are wrong, or a wrong 오전 / 오후 once the syllables
-  /// are right, are a miss.
-  Future<void> _checkTime(TimeRound r) async {
-    final slots = _slots!;
-    final built = isTimeBuilt(r, slots.text);
-    final id = _roundId;
-    if (built && (!r.showSky || _period == r.period)) {
-      setState(() => _fieldFlash = _green);
-      await _win(entered: slots.text);
-      return;
-    }
-    final wrongPeriod = built && _period != null && _period != r.period;
-    if (!wrongPeriod && (built || !slots.isFull)) return;
-    _miss();
-    setState(() {
-      _fieldFlash = _red;
-      _shake++;
-      if (wrongPeriod) _period = null;
-    });
-    await _delay();
-    if (mounted && id == _roundId) setState(() => _fieldFlash = null);
-  }
+  // ---------------------------------------------------------------- shared input (typing, keypad, tiles)
 
   /// Filled slot tapped: its tile goes back to the pile, leaving a gap.
   void _onSlot(int i) {
@@ -578,24 +343,6 @@ class _GameScreenState extends State<GameScreen> {
       _slots!.removeAt(i);
       _fieldFlash = null;
     });
-  }
-
-  Future<void> _checkSlots(TypingRound r) async {
-    final slots = _slots!;
-    if (!slots.isFull) return;
-    final id = _roundId;
-    if (isTypedAnswerCorrect(slots.text, r)) {
-      setState(() => _fieldFlash = _green);
-      await _win(entered: slots.text);
-    } else {
-      _miss();
-      setState(() {
-        _fieldFlash = _red;
-        _shake++;
-      });
-      await _delay();
-      if (mounted && id == _roundId) setState(() => _fieldFlash = null);
-    }
   }
 
   /// Replace the field text in one go (cursor at the end, no composing region).
@@ -832,52 +579,6 @@ class _GameScreenState extends State<GameScreen> {
   /// Words a game needs: a full Link Up board, or 3 for the others.
   int get _wordsNeeded => _game == GameEngine.linkUpGame ? LinkRound.size : GameEngine.answerCount;
 
-  /// Link Up: no scrolling here, so a line can be drawn in any direction.
-  Widget _linkBody(LinkRound r) {
-    final board = _links!;
-    return Padding(
-      key: ValueKey(_roundId),
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 16),
-      child: Column(
-        children: [
-          if (widget.shuffle) _shuffleBanner(),
-          const SizedBox(height: 6),
-          const FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              'Draw a line to link each pair! ✏️',
-              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900, color: _ink),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 540),
-                child: LinkBoardView(
-                  round: r,
-                  textSize: _bf,
-                  board: board,
-                  theme: _info.color,
-                  selected: _linkPick,
-                  dragFrom: _dragFrom,
-                  dragTo: _dragTo,
-                  wrong: _wrongLine,
-                  shake: _shake,
-                  onDown: _linkDown,
-                  onMove: _linkMove,
-                  onUp: _linkUp,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          _controlRow(null),
-        ],
-      ),
-    );
-  }
-
   Widget _roundBody() {
     final r = _round!;
     if (r is LinkRound) return _linkBody(r);
@@ -929,90 +630,7 @@ class _GameScreenState extends State<GameScreen> {
     ),
   );
 
-  // ---------------------------------------------------------------- 9️⃣ colours
-
-  /// 9️⃣: either a box painted in the colour with Korean-name buttons, or a
-  /// Korean name with colour buttons. No English or emoji in the round itself,
-  /// except the English a tap on the colour box peeks at. The colour buttons
-  /// are answers (a tap answers), just like emoji answer buttons.
-  List<Widget> _colorBody(ColorRound r) => [
-    if (r.colorInBox) _colorBox(r.target) else _promptCard(r.answer, true),
-    const SizedBox(height: 16),
-    for (var i = 0; i < r.options.length; i++)
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Shaker(
-                trigger: _optionColors[i] == _red ? _shake : 0,
-                child: r.colorInBox
-                    ? BouncyButton(
-                        key: ValueKey('color_option_$i'),
-                        // Neutral buttons: a coloured button would give the answer away.
-                        color: _optionColors[i] ?? _ink,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        onTap: () => _onColor(r, i),
-                        child: FitText(
-                          r.nameOf(r.options[i]),
-                          key: ValueKey('option_text_$i'),
-                          base: _bf,
-                          min: 12,
-                          maxLines: 2,
-                          style: const TextStyle(),
-                        ),
-                      )
-                    : _colorButton(r, i),
-              ),
-            ),
-            if (r.colorInBox) SpeakButton(text: () => r.nameOf(r.options[i])),
-          ],
-        ),
-      ),
-    const SizedBox(height: 18),
-    _controlRow(null),
-  ];
-
-  /// The colour prompt; a tap peeks at its English name (like an emoji
-  /// prompt), which never affects wins or the streak.
-  Widget _colorBox(GameColor c) => ColorPeek(
-    color: Color(c.argb),
-    english: appState.displayEnglish(c.english),
-    darkText: c.wantsDarkText,
-    outlined: c.isLight,
-    showEnglish: _peek,
-    onTap: () => setState(() => _peek = !_peek),
-  );
-
-  /// A solid colour button; a ✓ / ✗ mark (icons, not text) shows the result
-  /// without hiding the colour.
-  Widget _colorButton(ColorRound r, int i) {
-    final c = r.options[i];
-    final state = _optionColors[i];
-    return BouncyButton(
-      key: ValueKey('color_option_$i'),
-      color: Color(c.argb),
-      borderColor: c.isLight ? Colors.black38 : null,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      onTap: () => _onColor(r, i),
-      child: SizedBox(
-        height: 48,
-        child: state == null
-            ? null
-            : Center(
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    state == _green ? Icons.check_rounded : Icons.close_rounded,
-                    color: state,
-                    size: 34,
-                  ),
-                ),
-              ),
-      ),
-    );
-  }
+  // ---------------------------------------------------------------- shared widgets
 
   Widget _promptCard(String text, bool isKorean, {String english = ''}) {
     final size = baseSizeFor(text);
@@ -1065,66 +683,6 @@ class _GameScreenState extends State<GameScreen> {
   /// Answer-button text size (⚙️ 🔠 Button Font Size).
   double get _bf => appState.buttonFontSize;
 
-  List<Widget> _choice(ChoiceRound r) => [
-    _promptCard(r.prompt, r.promptIsKorean, english: r.promptEnglish),
-    const SizedBox(height: 16),
-    for (var i = 0; i < r.options.length; i++)
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Shaker(
-                trigger: _optionColors[i] == _red ? _shake : 0,
-                child: BouncyButton(
-                  color: _optionColors[i] ?? _optionPalette[i % _optionPalette.length],
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  onTap: () => _onOption(r, i),
-                  child: r.optionsAreKorean
-                      ? FitText(
-                          r.options[i],
-                          key: ValueKey('option_text_$i'),
-                          base: _bf,
-                          min: 12,
-                          maxLines: 2,
-                          style: const TextStyle(),
-                        )
-                      // 1️⃣ English/emoji answers: one line, shrunk to fit,
-                      // so the buttons keep the emoji buttons' height.
-                      : Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Visibility(
-                              visible: false,
-                              maintainSize: true,
-                              maintainAnimation: true,
-                              maintainState: true,
-                              child: Text('A', style: TextStyle(fontSize: _bf)),
-                            ),
-                            FitText(
-                              r.options[i],
-                              key: ValueKey('option_text_$i'),
-                              base: _bf,
-                              min: 12,
-                              maxLines: 1,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-            if (r.optionsAreKorean) SpeakButton(text: () => r.options[i]),
-          ],
-        ),
-      ),
-    const SizedBox(height: 18),
-    _controlRow(null),
-  ];
-
-  static const _optionPalette = [Color(0xFF7B5CFF), Color(0xFF00B4FF), Color(0xFFFF9F1C)];
-
   List<Widget> _typing(TypingRound r) {
     final slots = _slots;
     final keypad = isKeypadRound(r);
@@ -1165,175 +723,6 @@ class _GameScreenState extends State<GameScreen> {
       if (r.repetitions > 1) _progress(r),
       const SizedBox(height: 18),
       _controlRow(r.answer1.isNotEmpty ? _toggleHint : null),
-    ];
-  }
-
-  Widget _textFieldRow(TypingRound r) => Shaker(
-    trigger: _shake,
-    child: Row(
-      children: [
-        Expanded(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: _fieldFlash ?? Colors.white,
-            ),
-            child: TextField(
-              controller: _input,
-              focusNode: _focus,
-              autofocus: true,
-              // Never toggle readOnly (that closes/reopens the IME connection) and
-              // never set enableSuggestions:false: on Android the Flutter engine
-              // maps it to TYPE_TEXT_VARIATION_VISIBLE_PASSWORD, which makes
-              // Gboard refuse to switch to its Korean layout.
-              textInputAction: TextInputAction.done,
-              keyboardType: RegExp(r'^[0-9]+$').hasMatch(r.answer1)
-                  ? TextInputType.number
-                  : TextInputType.text,
-              autocorrect: false,
-              enableSuggestions: true,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _ink),
-              decoration: InputDecoration(
-                fillColor: Colors.transparent,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: _info.color, width: 3),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: _info.color, width: 4),
-                ),
-              ),
-              onEditingComplete: () {}, // keep the keyboard open
-              onChanged: (_) => _onTyped(r),
-              onSubmitted: (_) {
-                _endComposition();
-                _submit(r);
-              },
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        BouncyButton(
-          color: _green,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          onTap: () {
-            _endComposition();
-            _submit(r);
-          },
-          child: const Text('✔', style: TextStyle(fontSize: 26)),
-        ),
-      ],
-    ),
-  );
-
-  /// 7️⃣/8️⃣ digit rounds: a read-only display (no system keyboard) + keypad.
-  List<Widget> _keypadBody(TypingRound r) => [
-    Shaker(
-      trigger: _shake,
-      child: AnimatedContainer(
-        key: const ValueKey('digit-display'),
-        duration: const Duration(milliseconds: 120),
-        height: 66,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: _fieldFlash ?? Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _info.color, width: 3),
-        ),
-        child: Text(
-          _input.text,
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w900,
-            color: _ink,
-            letterSpacing: 2,
-          ),
-        ),
-      ),
-    ),
-    const SizedBox(height: 14),
-    NumberKeypad(
-      onDigit: (d) => _onDigit(r, d),
-      onBackspace: _backspace,
-      onSubmit: () => _submit(r),
-    ),
-  ];
-
-  /// 🕒: the clock (always), the digital time (⚙️ ⌚ Digital time), the
-  /// sky window with 오전 / 오후 in some rounds, then slots and tiles.
-  /// Slots come in word groups (세 시 | 십오 분), so spaces are never tiles.
-  List<Widget> _timeBody(TimeRound r) {
-    final slots = _slots!;
-    final groups = [for (final w in r.words) w.length];
-    return [
-      const SizedBox(height: 10),
-      FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CartoonClock(
-              key: const ValueKey('time_clock'),
-              hour: r.hour12,
-              minute: r.minute,
-              color: _info.color,
-              size: r.showSky ? 160 : 200,
-            ),
-            if (r.showSky) ...[
-              const SizedBox(width: 14),
-              SkyWindow(key: const ValueKey('time_sky'), scene: r.scene!),
-            ],
-          ],
-        ),
-      ),
-      if (appState.showDigitalTime)
-        Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Center(
-            child: Text(
-              r.digital,
-              key: const ValueKey('time_digital'),
-              style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: _ink),
-            ),
-          ),
-        ),
-      if (r.showSky) ...[
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (final p in const ['오전', '오후']) ...[
-              BouncyButton(
-                key: ValueKey('period_$p'),
-                color: _period == p ? _info.color : const Color(0xFF6B4E8C),
-                borderColor: _period == p
-                    ? _ink
-                    : (_hintVisible && p == r.period ? _ink.withValues(alpha: 0.35) : null),
-                padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
-                onTap: () => _onPeriod(r, p),
-                child: Text(p, style: TextStyle(fontSize: _bf)),
-              ),
-              if (p == '오전') const SizedBox(width: 18),
-            ],
-          ],
-        ),
-      ],
-      const SizedBox(height: 16),
-      Shaker(
-        trigger: _shake,
-        child: SlotLine(
-          key: const ValueKey('time_slots'),
-          groups: groups,
-          slot: (i) => _slotBox(i, slots, 46),
-        ),
-      ),
-      const SizedBox(height: 16),
-      _timeTiles(r.tiles, slots, (i) => _onTimeTile(r, i)),
-      const SizedBox(height: 18),
-      _controlRow(_toggleHint),
     ];
   }
 
@@ -1437,102 +826,6 @@ class _GameScreenState extends State<GameScreen> {
             child: Row(children: [for (var c = 0; c < 5; c++) cell(button(row * 5 + c))]),
           ),
       ],
-    );
-  }
-
-  /// 5️⃣/6️⃣: one box per answer letter, then the tile pile and ⌫.
-  List<Widget> _slotBody(TypingRound r, TileSlots slots) {
-    final box = slots.length <= 5 ? 58.0 : (slots.length <= 8 ? 46.0 : 38.0);
-    return [
-      Shaker(
-        trigger: _shake,
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 6,
-          runSpacing: 8,
-          children: [for (var i = 0; i < slots.length; i++) _slotBox(i, slots, box)],
-        ),
-      ),
-      const SizedBox(height: 16),
-      Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 10,
-        runSpacing: 12,
-        children: [
-          for (var i = 0; i < r.charButtons.length; i++)
-            AnimatedOpacity(
-              key: ValueKey('tile_$i'),
-              duration: const Duration(milliseconds: 150),
-              opacity: slots.isUsed(i) ? 0.2 : 1,
-              child: BouncyButton(
-                color: _helperPalette[i % _helperPalette.length],
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                radius: 16,
-                onTap: slots.isUsed(i) ? null : () => _onTile(r, i),
-                child: Text(r.charButtons[i], style: TextStyle(fontSize: _bf)),
-              ),
-            ),
-          BouncyButton(
-            key: const ValueKey('tile_backspace'),
-            color: const Color(0xFF9E9E9E),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            radius: 16,
-            onTap: _backspace,
-            child: Text('⌫', style: TextStyle(fontSize: _bf)),
-          ),
-        ],
-      ),
-    ];
-  }
-
-  static const _helperPalette = [
-    Color(0xFFFF5C8A),
-    Color(0xFF7B5CFF),
-    Color(0xFF00B4FF),
-    Color(0xFF2EC4B6),
-    Color(0xFFFF9F1C),
-    Color(0xFFE040FB),
-  ];
-
-  /// 3️⃣: the green bar fills per correct repetition; 'x / 5' sits centred
-  /// inside it (dark ink reads on both the green and the grey part).
-  Widget _progress(TypingRound r) {
-    final frac = _reps / r.repetitions;
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: ClipRRect(
-        key: const ValueKey('reps_bar'),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          height: 32,
-          color: const Color(0xFFDDDDDD),
-          child: Stack(
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: AnimatedFractionallySizedBox(
-                  duration: const Duration(milliseconds: 200),
-                  widthFactor: frac,
-                  heightFactor: 1,
-                  child: Container(color: _green),
-                ),
-              ),
-              Center(
-                child: Text(
-                  '$_reps / ${r.repetitions}',
-                  key: const ValueKey('reps_label'),
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                    color: _ink,
-                    shadows: [Shadow(color: Color(0x88FFFFFF), blurRadius: 4)],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
