@@ -194,8 +194,8 @@ void main() {
       expect(s.activeVocab().any((e) => e.english1 == 'Ghost'), isFalse);
       expect(
         s.activeVocab().length,
-        568,
-      ); // existing install keeps 🗣️ on; v11: −12 Who's Who, +10 Family; v12: +4 Body Parts
+        544,
+      ); // the same as a fresh install: 🗣️ and the other default-off packs off
     });
   });
 
@@ -250,54 +250,6 @@ void main() {
   });
 
   group('migration and persistence', () {
-    test('old custom words map their category to a pack, else My Words', () async {
-      final old = [
-        {'sectionName': 'Custom_1', 'categoryName': 'Food', 'english1': 'Ramen', 'korean1': '라면'},
-        {'sectionName': 'Custom_2', 'categoryName': 'Animal', 'english1': 'Fox', 'korean1': '여우'},
-        {'sectionName': 'Custom_3', 'categoryName': 'Stuff', 'english1': 'Pen', 'korean1': '펜'},
-        {
-          'sectionName': 'Custom_4',
-          'categoryName': '',
-          'english1': 'Hi',
-          'korean1': '안녕',
-          'emoji': '👋',
-          'korean2': '안뇽',
-          'isFullPhrase': true,
-        },
-        {
-          'sectionName': 'Custom_5',
-          'categoryName': 'body parts',
-          'english1': 'Toe',
-          'korean1': '발가락',
-        },
-      ];
-      final s = await fresh({'custom_words': jsonEncode(old)});
-      expect(s.customWords.map((e) => e.packId), [
-        'food',
-        'animals',
-        customBundleId,
-        customBundleId,
-        'body',
-        // v13: the family names are seeded after the player's own words.
-        ...seededMyWords.map((e) => e.packId),
-      ]);
-      final hi = s.customWords[3];
-      expect((hi.emoji, hi.korean2, hi.isFullPhrase), ('👋', '안뇽', true));
-      final prefs = await SharedPreferences.getInstance();
-      final saved = jsonDecode(prefs.getString('custom_words')!) as List;
-      expect(saved.map((j) => j['packId']), [
-        'food',
-        'animals',
-        'custom',
-        'custom',
-        'body',
-        'custom',
-        'custom',
-        'custom',
-      ]);
-      expect((await reload()).customWords.length, 8);
-    });
-
     test('packs, order, toggles, words and edits all survive a restart', () async {
       final s = await fresh();
       for (final (name, emoji) in [('Zoo', '🦁'), ('Anime', '🍥'), ('Music', '🎵')]) {

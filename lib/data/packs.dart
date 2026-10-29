@@ -64,8 +64,6 @@ PackChoice resolvePackInput(String input, {required List<UserPack> userPacks}) {
   for (final b in builtInBundles) {
     if (packKey(b.name) == key) return PackChoice(PackKind.builtIn, b.id, b.name);
   }
-  final renamed = builtInBundleById(renamedBundles[key] ?? '');
-  if (renamed != null) return PackChoice(PackKind.builtIn, renamed.id, renamed.name);
   for (final p in userPacks) {
     if (packKey(p.name) == key) return PackChoice(PackKind.user, p.id, p.name);
   }

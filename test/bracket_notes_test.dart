@@ -36,38 +36,6 @@ void main() {
       expect(_all.where((e) => e.emoji == '💪'), hasLength(1));
     });
 
-    test('a saved edit carrying the old 💪 gets no emoji; other edits stay', () async {
-      final strength = _w('힘', 'Strength');
-      SharedPreferences.setMockInitialValues({
-        AppState.kOverrides: jsonEncode({
-          strength.sectionName: strength.copyWith(emoji: '💪', korean2: '기운').toJson(),
-        }),
-      });
-      final s = AppState();
-      await s.load();
-      final e = s.effectiveBuiltIn.singleWhere((e) => e.sectionName == strength.sectionName);
-      expect(e.emoji, '');
-      expect(e.korean2, '기운', reason: 'the real edit is kept');
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString(AppState.kOverrides), isNot(contains('💪')));
-    });
-
-    test('an edit that only differed by the old 💪 goes away', () async {
-      final strength = _w('힘', 'Strength');
-      SharedPreferences.setMockInitialValues({
-        AppState.kOverrides: jsonEncode({
-          strength.sectionName: strength.copyWith(emoji: '💪').toJson(),
-        }),
-      });
-      final s = AppState();
-      await s.load();
-      expect(s.isOverridden(strength), isFalse);
-      expect(
-        s.effectiveBuiltIn.singleWhere((e) => e.sectionName == strength.sectionName).emoji,
-        '',
-      );
-    });
-
     test('a different emoji the player chose for Strength is kept', () async {
       final strength = _w('힘', 'Strength');
       SharedPreferences.setMockInitialValues({

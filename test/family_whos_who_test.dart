@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
-import 'package:hangul_hooray/data/packs.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
 import 'package:hangul_hooray/logic/ini_parser.dart';
 import 'package:hangul_hooray/models/vocab_entry.dart';
@@ -83,14 +81,6 @@ void main() {
       expect(_k('가족').emoji, '👨‍👩‍👧‍👦');
     });
 
-    test('the old name "People & Family" still finds the pack', () {
-      expect(resolvePackInput('People & Family', userPacks: const []).id, 'people');
-      expect(resolvePackInput('family', userPacks: const []).id, 'people');
-      expect(builtInPackIdFor('People & Family'), 'people');
-      expect(packIdForIni(pack: 'People & Family'), 'people');
-      expect(builtInPackForLegacyCategory('People & Family'), 'people');
-    });
-
     test('Orange (fruit) and Orange (color)', () {
       final fruit = _k('오렌지');
       final colour = _k('주황색');
@@ -133,53 +123,5 @@ void main() {
       await s.setBundleEnabled('whos-who', true);
       expect(s.activeVocab().map((e) => e.korean1).toSet(), {..._family, ..._whosWho});
     });
-
-    test('edits filed under a word\'s old home follow it; chosen packs stay', () async {
-      final person = _k('사람'); // People & Family -> Who's Who
-      final mom = _k('엄마'); // Who's Who -> Family
-      final age = _k('나이'); // Who's Who -> How Things Are
-      final friend = _k('친구');
-      SharedPreferences.setMockInitialValues({
-        AppState.kOverrides: jsonEncode({
-          person.sectionName: person.copyWith(packId: 'people', english1: 'Human').toJson(),
-          mom.sectionName: mom.copyWith(packId: 'whos-who', korean2: '어머니').toJson(),
-          age.sectionName: age.copyWith(packId: 'whos-who').toJson(),
-          friend.sectionName: friend.copyWith(packId: 'food').toJson(),
-        }),
-        ...keep,
-      });
-      final s = AppState();
-      await s.load();
-      VocabEntry live(VocabEntry e) =>
-          s.effectiveBuiltIn.singleWhere((x) => x.sectionName == e.sectionName);
-      expect((live(person).packId, live(person).english1), ('whos-who', 'Human'));
-      expect((live(mom).packId, live(mom).korean2), ('people', '어머니'));
-      expect(s.isOverridden(age), isFalse, reason: 'only the old pack: no edit left');
-      expect(live(age).packId, 'how-things-are');
-      expect(live(friend).packId, 'food', reason: 'the player chose it');
-      final saved = jsonDecode(
-        (await SharedPreferences.getInstance()).getString(AppState.kOverrides)!,
-      ) as Map<String, dynamic>;
-      expect((saved[person.sectionName] as Map)['packId'], 'whos-who');
-      expect((saved[mom.sectionName] as Map)['packId'], 'people');
-      expect(saved.containsKey(age.sectionName), isFalse);
-    });
-
-    test('every moved word is listed with its old home', () {
-      final before = parseIni(
-        File('/workspace/tools/korean_vocab_before_v11.ini').readAsStringSync(),
-      );
-      final now = {for (final e in _all) e.sectionName: e.packId};
-      final moved = {
-        for (final e in before)
-          // The family names left the INI for My Words in v13.
-          if (now[e.sectionName] != e.packId &&
-              !retiredNameEntries.contains(e.sectionName) &&
-              // 53 and 75 left the 🔢 pack in v14.
-              !const {'Entry_00429', 'Entry_00432'}.contains(e.sectionName))
-            e.sectionName: e.packId,
-      };
-      expect(moved, movedWords);
-    }, skip: !File('/workspace/tools/korean_vocab_before_v11.ini').existsSync());
   });
 }

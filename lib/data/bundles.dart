@@ -110,10 +110,6 @@ final List<WordBundle> builtInBundles = [
   ),
 ];
 
-/// Packs that used to start ON and now start OFF. Only fresh installs get
-/// the new default: an existing player's switch (saved or not) is kept.
-const Set<String> newlyDefaultOffBundles = {'phrases'};
-
 /// Built-in packs that start switched OFF, both on a fresh install and for a
 /// player updating from a version without them (their saved toggles for the
 /// older packs are left exactly as they were).
@@ -130,65 +126,6 @@ const Set<String> defaultOffBundles = {
   'big-words',
   'big-brain-ideas',
   'how-things-are',
-};
-
-/// Packs that were split up in an update: old id -> the ids that replaced it.
-/// A player who had the old pack switched off gets the new ones off too.
-const Map<String, List<String>> splitBundles = {
-  'critters': ['people', 'animals', 'body'],
-};
-
-/// Packs removed in an update: old id -> the pack its words moved to. Saved
-/// words in a retired pack move with them (emotion words go to Emotions,
-/// see AppState), and a player who had it on gets its new home on.
-const Map<String, String> retiredBundles = {'words': grabBagBundleId};
-
-/// Built-in packs renamed in an update: old name (lower case) -> pack id, so
-/// the old name typed in the Word Pack field still finds the pack.
-const Map<String, String> renamedBundles = {'people & family': 'people'};
-
-/// Built-in words whose home pack changed in v11 (Family / Who's Who split)
-/// and v12 (body parts out of Heart & Body):
-/// section -> the old home pack. A saved edit still homed in the old pack
-/// follows the word to its new one.
-const Map<String, String> movedWords = {
-  // People & Family -> Who's Who
-  'Entry_00173': 'people', // 남자들 Men
-  'Entry_00183': 'people', // 시민 Citizen
-  'Entry_00186': 'people', // 종업원 staff
-  'Entry_00193': 'people', // 팬 Fan
-  'Entry_00194': 'people', // 아이돌 Idol
-  'Entry_00195': 'people', // 모델 Model
-  'Entry_00197': 'people', // 스타일리스트 Stylist
-  'Entry_00198': 'people', // 디자이너 Designer
-  'Entry_00218': 'people', // 사람 Person
-  'Entry_00219': 'people', // 친구 Friend
-  'Entry_00254': 'people', // 남성 Male
-  'Entry_00255': 'people', // 여성 Female
-  // Who's Who -> Family
-  'Entry_00571': 'whos-who', // 엄마 Mom
-  'Entry_00575': 'whos-who', // 자식 Children
-  'Entry_00577': 'whos-who', // 할머니 Grandmother
-  'Entry_00580': 'whos-who', // 결혼 Marriage
-  'Entry_00581': 'whos-who', // 동생 Younger sibling
-  'Entry_00582': 'whos-who', // 아기 Baby
-  'Entry_00586': 'whos-who', // 부모 Parents
-  'Entry_00587': 'whos-who', // 할아버지 Grandfather
-  'Entry_00589': 'whos-who', // 가정 Household
-  'Entry_00597': 'whos-who', // 부부 Married couple
-  // Who's Who -> Big Brain Ideas / How Things Are
-  'Entry_00566': 'whos-who', // 자신 Oneself
-  'Entry_00572': 'whos-who', // 남 Others
-  'Entry_00573': 'whos-who', // 혼자 Alone
-  'Entry_00574': 'whos-who', // 나이 Age
-  'Entry_00578': 'whos-who', // 개인 Individual
-  'Entry_00593': 'whos-who', // 인류 Humankind
-  'Entry_00601': 'whos-who', // 출신 Origin
-  // v12: Heart & Body -> Body Parts
-  'Entry_00675': 'heart-and-body', // 몸 Body
-  'Entry_00683': 'heart-and-body', // 고개 Head (nod)
-  'Entry_00700': 'heart-and-body', // 등 Back (body)
-  'Entry_00703': 'heart-and-body', // 허리 Waist
 };
 
 const String emotionsBundleId = 'emotions';
@@ -222,16 +159,6 @@ const List<VocabEntry> seededMyWords = [
   ),
 ];
 
-/// v13: the built-in entries the seeded names replace (removed from the INI),
-/// matched by position with [seededMyWords]. An edit a player made to one of
-/// them is carried over to its My Words copy.
-const List<String> retiredNameEntries = ['Entry_00262', 'Entry_00263', 'Entry_00264'];
-
-/// v13: Korean spellings an old version wrongly "fixed" these names to. A
-/// carried-over edit still holding one gets the right spelling back; any other
-/// Korean the player typed is theirs and stays.
-const Map<String, String> wrongNameSpellings = {'미셸앙드레': '미셸안드레', '니콜': '다정전'};
-
 const String phrasesBundleId = 'phrases';
 const String grabBagBundleId = 'grabbag';
 
@@ -244,8 +171,6 @@ String packIdForIni({String pack = '', String category = '', bool isFullPhrase =
     for (final b in builtInBundles) {
       if (b.id == p || b.name.toLowerCase() == p) return b.id;
     }
-    final renamed = renamedBundles[p];
-    if (renamed != null) return renamed;
   }
   if (isFullPhrase) return phrasesBundleId;
   final c = category.trim().toLowerCase();
@@ -264,19 +189,7 @@ String? builtInPackIdFor(String pack) {
   for (final b in builtInBundles) {
     if (b.id == p || b.name.toLowerCase() == p) return b.id;
   }
-  return renamedBundles[p];
-}
-
-/// Built-in pack whose name or old category matches [category] (migration of
-/// custom words saved with a category), or null.
-String? builtInPackForLegacyCategory(String category) {
-  final c = category.trim().toLowerCase();
-  if (c.isEmpty) return null;
-  for (final b in builtInBundles) {
-    if (b.name.toLowerCase() == c || b.id == c) return b.id;
-    if (b.legacyCategories.any((x) => x.toLowerCase() == c)) return b.id;
-  }
-  return renamedBundles[c];
+  return null;
 }
 
 WordBundle? builtInBundleById(String id) {

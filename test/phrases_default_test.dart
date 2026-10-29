@@ -30,20 +30,6 @@ void main() {
       expect(s.activeVocab().length, 544); // 568 − 24 Handy Phrases
     });
 
-    test('existing player who never touched a pack switch keeps Handy Phrases on', () async {
-      final s = await fresh({
-        'known_bundles': builtInBundles.map((b) => b.id).toList(),
-        AppState.kVibration: true,
-      });
-      expect(s.enabledBundles, contains('phrases'));
-      expect(s.enabledBundles, isNot(contains('whos-who')));
-      expect(await savedPacks(), contains('phrases'), reason: 'saved, so it sticks');
-      // and it stays on after another restart
-      final again = AppState();
-      await again.load();
-      expect(again.enabledBundles, contains('phrases'));
-    });
-
     test('a saved choice is kept either way', () async {
       final ids = builtInBundles.map((b) => b.id).toList();
       final on = await fresh({
@@ -57,15 +43,6 @@ void main() {
       });
       expect(off.enabledBundles, isNot(contains('phrases')));
       expect(await savedPacks(), isNot(contains('phrases')));
-    });
-
-    test('the in-play count drops by exactly the Handy Phrases words', () async {
-      final ids = builtInBundles.map((b) => b.id).toList();
-      final old = await fresh({'known_bundles': ids});
-      final s = await fresh();
-      final phrasesOnly = old.activeVocab().where((e) => e.packId == 'phrases').length;
-      expect(phrasesOnly, greaterThan(0));
-      expect(s.activeVocab().length, old.activeVocab().length - phrasesOnly);
     });
   });
 

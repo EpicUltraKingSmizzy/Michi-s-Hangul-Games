@@ -28,9 +28,6 @@ Future<AppState> _reload() async {
 List<(String, String)> _customNames(AppState s) =>
     s.customWords.map((e) => (e.english1, e.korean1)).toList();
 
-String _override(String section, VocabEntry e) =>
-    jsonEncode({section: e.copyWith(sectionName: section).toJson()});
-
 /// An existing install: something is saved (here, a switched-off option).
 const _existing = <String, Object>{AppState.kVibration: false};
 
@@ -46,10 +43,6 @@ void main() {
       for (final k in ['미시', '미셸안드레', '미셸앙드레', '다정전', '니콜']) {
         expect(all.where((e) => e.korean1 == k || e.korean2 == k), isEmpty, reason: k);
       }
-      for (final section in retiredNameEntries) {
-        expect(all.where((e) => e.sectionName == section), isEmpty, reason: section);
-        expect(movedWords.containsKey(section), isFalse);
-      }
       expect(all.where((e) => e.inPack('people')), hasLength(25));
     });
 
@@ -61,7 +54,6 @@ void main() {
         expect(e.sectionName, startsWith('Custom_'));
       }
       expect(seededMyWords.map((e) => e.sectionName).toSet(), hasLength(3));
-      expect(wrongNameSpellings, {'미셸앙드레': '미셸안드레', '니콜': '다정전'});
     });
 
     test('My Words is on by default', () {
@@ -125,57 +117,6 @@ void main() {
       expect(_customNames(await _reload()), [('Fox', '여우'), ..._names]);
     });
 
-    test('an edit is carried over, with the right spelling back', () async {
-      final s = await _load({
-        ..._existing,
-        AppState.kOverrides: _override(
-          'Entry_00263',
-          const VocabEntry(
-            packId: 'people',
-            english1: 'Michel-André (dad)',
-            emoji: '🧔',
-            korean1: '미셸앙드레',
-          ),
-        ),
-      });
-      final m = s.customWords.firstWhere((e) => e.sectionName == 'Custom_seed_michel_andre');
-      expect(
-        (m.english1, m.korean1, m.emoji, m.packId),
-        ('Michel-André (dad)', '미셸안드레', '🧔', customBundleId),
-      );
-      expect(s.overrides.keys.where(retiredNameEntries.contains), isEmpty);
-      final saved = jsonDecode(
-        (await SharedPreferences.getInstance()).getString(AppState.kOverrides)!,
-      ) as Map;
-      expect(saved.keys.where(retiredNameEntries.contains), isEmpty);
-      expect(s.customWords, hasLength(3));
-    });
-
-    test('Korean the player typed is theirs; a pack they picked is kept', () async {
-      final s = await _load({
-        ..._existing,
-        AppState.kOverrides: jsonEncode({
-          ...jsonDecode(
-            _override(
-              'Entry_00264',
-              const VocabEntry(packId: 'people', english1: 'Nicole', korean1: '니콜이'),
-            ),
-          ) as Map,
-          ...jsonDecode(
-            _override(
-              'Entry_00262',
-              const VocabEntry(packId: 'whos-who', english1: 'Michi', korean1: '미시'),
-            ),
-          ) as Map,
-        }),
-      });
-      expect(s.customWords.map((e) => (e.english1, e.korean1, e.packId)), [
-        ('Michi', '미시', 'whos-who'),
-        ('Michel-André', '미셸안드레', customBundleId),
-        ('Nicole', '니콜이', customBundleId),
-      ]);
-    });
-
     test('no duplicates of custom words with the same Korean', () async {
       final s = await _load({
         ..._existing,
@@ -196,11 +137,11 @@ void main() {
             sectionName: 'Custom_3',
             packId: 'custom',
             english1: 'Dad',
-            korean1: '미셸앙드레',
+            korean1: '미셸안드레',
           ).toJson(),
         ]),
       });
-      expect(_customNames(s), [('Mom', '다정전'), ('Me', '미 시'), ('Dad', '미셸앙드레')]);
+      expect(_customNames(s), [('Mom', '다정전'), ('Me', '미 시'), ('Dad', '미셸안드레')]);
       expect(_customNames(await _reload()), hasLength(3));
     });
 

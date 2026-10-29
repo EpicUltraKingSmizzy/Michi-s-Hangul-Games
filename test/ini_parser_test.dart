@@ -119,7 +119,7 @@ void main() {
     // The original word list (the top-500 noun packs reuse a few English
     // words, e.g. 부모 "Parents" next to 부모님).
     final entries = parseIni(File('assets/korean_vocab.ini').readAsStringSync())
-        .where((e) => !defaultOffBundles.difference(newlyDefaultOffBundles).contains(e.packId))
+        .where((e) => !defaultOffBundles.difference({phrasesBundleId}).contains(e.packId))
         .toList();
     VocabEntry byEn(String en) => entries.singleWhere((e) => e.english1 == en);
     expect(byEn('Spiderweb').korean1, '거미줄');

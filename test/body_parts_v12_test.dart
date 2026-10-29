@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -38,7 +37,6 @@ void main() {
         final e = _s(section);
         expect((e.korean1, e.packId), (korean, 'body'), reason: korean);
         expect(e.alsoPacks, isEmpty, reason: korean);
-        expect(movedWords[section], 'heart-and-body', reason: 'saved edits follow $korean');
       });
     });
 
@@ -92,39 +90,6 @@ void main() {
       final s = AppState();
       await s.load();
       expect(s.activeVocab().map((e) => e.korean1).toSet(), _heartAndBody);
-    });
-
-    test('edits filed under Heart & Body follow the word; chosen packs stay', () async {
-      final mom = _s('Entry_00675'); // 몸
-      final nod = _s('Entry_00683'); // 고개
-      final back = _s('Entry_00700'); // 등
-      final eye = _s('Entry_00005'); // 눈, was shared into Heart & Body
-      SharedPreferences.setMockInitialValues({
-        AppState.kOverrides: jsonEncode({
-          mom.sectionName: mom.copyWith(packId: 'heart-and-body', english1: 'My body').toJson(),
-          nod.sectionName: nod.copyWith(packId: 'heart-and-body').toJson(),
-          back.sectionName: back.copyWith(packId: 'food').toJson(),
-          eye.sectionName: eye
-              .copyWith(english1: 'Eyeball', alsoPacks: ['heart-and-body'])
-              .toJson(),
-        }),
-        ...keep,
-      });
-      final s = AppState();
-      await s.load();
-      VocabEntry live(VocabEntry e) =>
-          s.effectiveBuiltIn.singleWhere((x) => x.sectionName == e.sectionName);
-      expect((live(mom).packId, live(mom).english1), ('body', 'My body'));
-      expect(s.isOverridden(nod), isFalse, reason: 'only the old pack: no edit left');
-      expect(live(nod).packId, 'body');
-      expect(live(back).packId, 'food', reason: 'the player chose it');
-      expect((live(eye).packId, live(eye).english1), ('body', 'Eyeball'));
-      expect(live(eye).alsoPacks, isEmpty, reason: 'shared packs come from the word list');
-      final saved = jsonDecode(
-        (await SharedPreferences.getInstance()).getString(AppState.kOverrides)!,
-      ) as Map<String, dynamic>;
-      expect((saved[mom.sectionName] as Map)['packId'], 'body');
-      expect(saved.containsKey(nod.sectionName), isFalse);
     });
   });
 }

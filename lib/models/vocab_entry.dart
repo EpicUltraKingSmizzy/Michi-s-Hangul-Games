@@ -77,9 +77,6 @@ class VocabEntry {
     alsoPacks: [for (final p in (j['alsoPacks'] as List?) ?? const []) '$p'],
   );
 
-  /// Old saves (before Word Packs) stored a free-text category instead.
-  static String legacyCategoryOf(Map<String, dynamic> j) => (j['categoryName'] ?? '') as String;
-
   @override
   bool operator ==(Object other) =>
       other is VocabEntry &&

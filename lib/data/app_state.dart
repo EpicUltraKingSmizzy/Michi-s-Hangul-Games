@@ -35,10 +35,6 @@ class AppState extends ChangeNotifier {
   static const kPackWins = 'pack_wins_by_day';
   static const kWonWords = 'won_words';
 
-  /// Emojis taken off built-in words in an update (section → old emoji). A
-  /// saved edit still carrying the old emoji gets the bundled one instead.
-  static const retiredEmojis = {'Entry_00305': '💪'}; // 힘 Strength
-
   /// Old single 3️⃣-in-Shuffle toggle; read once to migrate into [kShuffleOff].
   static const kLegacyShuffleGame3 = 'opt_shuffle_game3';
 
@@ -68,20 +64,6 @@ class AppState extends ChangeNotifier {
   /// Set once 🎯 Pick the Korean (old game 2) has been folded into 🔍 Pick
   /// the meaning (wins and 🔀 Shuffle switch); number 2 is now 🕒.
   static const kMergedGame2 = 'merged_game2_v16';
-
-  /// Packs that existed before [_kKnown] was stored (first release).
-  static const _firstReleaseBundles = {
-    'phrases',
-    'food',
-    'home',
-    'outside',
-    'critters',
-    'words',
-    'verbs',
-    'numbers',
-    'grabbag',
-    customBundleId,
-  };
 
   late SharedPreferences _prefs;
 
@@ -206,89 +188,31 @@ class AppState extends ChangeNotifier {
         ? id
         : fallback;
 
-    // Words saved in a retired pack follow its words: emotion words go to
-    // Emotions, the rest to the pack that took over (Words & Feelings ->
-    // Grab Bag).
-    final emotionKorean = {
-      for (final e in builtIn.where((e) => e.packId == emotionsBundleId))
-        for (final k in [e.korean1, e.korean2])
-          if (k.trim().isNotEmpty) stripSpaces(k),
-    };
-    bool isEmotionWord(VocabEntry e) => [
-      e.korean1,
-      e.korean2,
-    ].any((k) => k.trim().isNotEmpty && emotionKorean.contains(stripSpaces(k)));
-    String rehome(String id, VocabEntry e) {
-      final to = retiredBundles[id];
-      if (to == null) return id;
-      return isEmotionWord(e) ? emotionsBundleId : to;
-    }
-
-    // Custom words. Saves from before Word Packs have a free-text category:
-    // it maps onto the matching built-in pack, otherwise My Words.
+    // Custom words (My Words and the player's own packs).
     var migrated = false;
     final customJson = _prefs.getString(_kCustom);
     customWords = [];
     if (customJson != null) {
       for (final raw in jsonDecode(customJson) as List) {
-        final j = raw as Map<String, dynamic>;
-        var e = VocabEntry.fromJson(j);
-        if (!j.containsKey('packId')) {
-          migrated = true;
-          final legacy = VocabEntry.legacyCategoryOf(j);
-          var pack = builtInPackForLegacyCategory(legacy) ?? customBundleId;
-          // Old "Vocab" / "Words & Feelings" words were the retired pack's.
-          if (pack == grabBagBundleId && legacy.trim().toLowerCase() != 'grab bag') pack = 'words';
-          e = e.copyWith(packId: pack);
-        }
-        if (retiredBundles.containsKey(e.packId)) {
-          migrated = true;
-          e = e.copyWith(packId: rehome(e.packId, e));
-        }
+        final e = VocabEntry.fromJson(raw as Map<String, dynamic>);
         customWords.add(e.copyWith(packId: validPack(e.packId, customBundleId)));
       }
     }
 
-    var overridesMigrated = false;
+    // The player's edits of built-in words; the shipped originals stay in
+    // [_originalBySection] for the reset button.
     final overridesJson = _prefs.getString(kOverrides);
     overrides = {};
-    // Edits to the family names that left the INI (v13) go to My Words below.
-    final retiredNameEdits = <String, VocabEntry>{};
     if (overridesJson != null) {
       (jsonDecode(overridesJson) as Map<String, dynamic>).forEach((section, j) {
-        var e = VocabEntry.fromJson(j as Map<String, dynamic>);
-        if (retiredNameEntries.contains(section)) {
-          retiredNameEdits[section] = e;
-          overridesMigrated = true;
-          return;
-        }
+        final e = VocabEntry.fromJson(j as Map<String, dynamic>);
         final original = _originalBySection[section];
-        if (retiredBundles.containsKey(e.packId)) overridesMigrated = true;
-        final retiredEmoji = retiredEmojis[section];
-        final emojiRetired = original != null && retiredEmoji != null && e.emoji == retiredEmoji;
-        if (emojiRetired) {
-          overridesMigrated = true;
-          e = e.copyWith(emoji: original.emoji);
-        }
-        // A word that changed home pack (v11) takes an edit still filed
-        // under its old home along with it.
-        final movedFrom = movedWords[section];
-        final moved = original != null && movedFrom != null && e.packId == movedFrom;
-        if (moved) {
-          overridesMigrated = true;
-          e = e.copyWith(packId: original.packId);
-        }
-        final o = e.copyWith(
+        overrides[section] = e.copyWith(
           sectionName: section,
-          // Extra packs come from the bundled list, never from the save
-          // (edits made before shared words existed have none).
+          // Extra packs come from the bundled list, never from the save.
           alsoPacks: original?.alsoPacks ?? const [],
-          packId: validPack(rehome(e.packId, e), original?.packId ?? customBundleId),
+          packId: validPack(e.packId, original?.packId ?? customBundleId),
         );
-        // An edit that only kept the old emoji or pack is no edit any more.
-        if (!((emojiRetired || moved) && o == original)) {
-          overrides[section] = o;
-        }
       });
     }
 
@@ -297,30 +221,13 @@ class AppState extends ChangeNotifier {
     final allIds = {...builtInIds, ...userIds};
     // Fresh install: everything on except the packs that start off.
     enabledBundles = enabled?.toSet() ?? allIds.difference(defaultOffBundles);
-    if (enabled == null && existingInstall) {
-      // A player who never touched a pack switch has no saved list: keep the
-      // packs that were on by default when they installed, and save that.
-      enabledBundles.addAll(newlyDefaultOffBundles.intersection(builtInIds));
-      await _prefs.setStringList(_kEnabled, enabledBundles.toList());
-    }
     if (enabled != null) {
       // Packs added in an app update start switched on, without re-enabling
       // packs the player turned off.
-      final known = _prefs.getStringList(_kKnown)?.toSet() ?? _firstReleaseBundles;
+      final known = _prefs.getStringList(_kKnown)?.toSet() ?? builtInIds;
       final added = builtInIds.difference(known);
-      // A retired pack that was on switches its new home on, so its words
-      // stay in play.
-      retiredBundles.forEach((old, to) {
-        if (known.contains(old) && enabledBundles.contains(old)) enabledBundles.add(to);
-      });
       for (final id in added) {
-        if (defaultOffBundles.contains(id)) continue; // new, but starts off
-        // A pack split out of an old one inherits the old pack's switch;
-        // anything else new starts switched on.
-        final parent = splitBundles.entries
-            .where((s) => s.value.contains(id) && known.contains(s.key))
-            .map((s) => s.key);
-        if (parent.isEmpty || enabledBundles.contains(parent.first)) enabledBundles.add(id);
+        if (!defaultOffBundles.contains(id)) enabledBundles.add(id);
       }
       enabledBundles.removeWhere((id) => !allIds.contains(id));
       if (added.isNotEmpty ||
@@ -340,43 +247,15 @@ class AppState extends ChangeNotifier {
           for (final k in [c.korean1, c.korean2])
             if (k.trim().isNotEmpty) stripSpaces(k),
       };
-      for (var i = 0; i < seededMyWords.length; i++) {
-        final seed = seededMyWords[i];
-        var word = seed;
-        final edit = retiredNameEdits[retiredNameEntries[i]];
-        if (edit != null) {
-          // The player's edit comes along, with the name's right spelling
-          // unless they typed their own Korean. Family was the names' old
-          // home; a pack the player picked themselves is kept.
-          final korean = wrongNameSpellings[edit.korean1.trim()] ?? edit.korean1;
-          final pack = edit.packId == 'people' ? customBundleId : edit.packId;
-          word = edit.copyWith(
-            sectionName: seed.sectionName,
-            korean1: korean,
-            packId: validPack(pack, customBundleId),
-            alsoPacks: const [],
-          );
-        }
-        final keys = {
-          word.korean1,
-          seed.korean1,
-          for (final w in wrongNameSpellings.entries)
-            if (w.value == seed.korean1) w.key,
-        }.where((k) => k.trim().isNotEmpty).map(stripSpaces);
-        if (keys.any(have.contains)) continue;
-        customWords.add(word);
-        have.addAll(keys);
+      for (final seed in seededMyWords) {
+        if (seed.korean1.trim().isNotEmpty && have.contains(stripSpaces(seed.korean1))) continue;
+        customWords.add(seed);
+        have.add(stripSpaces(seed.korean1));
         migrated = true;
       }
     }
     if (migrated) await _prefs.setString(_kCustom, _encodeCustom());
     if (seedNow) await _prefs.setBool(kSeededMyWords, true);
-    if (overridesMigrated) {
-      await _prefs.setString(
-        kOverrides,
-        jsonEncode(overrides.map((k, v) => MapEntry(k, v.toJson()))),
-      );
-    }
 
     final winsJson = _prefs.getString(_kWins);
     if (winsJson != null) {
