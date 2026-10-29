@@ -99,7 +99,10 @@ extension _TypingGame on _GameScreenState {
                 ),
               ),
               onEditingComplete: () {}, // keep the keyboard open
-              onChanged: (_) => _onTyped(r),
+              onChanged: (_) {
+                _dismissTypingTip();
+                _onTyped(r);
+              },
               onSubmitted: (_) {
                 _endComposition();
                 _submit(r);
@@ -162,4 +165,22 @@ extension _TypingGame on _GameScreenState {
       ),
     );
   }
+
+  /// Only when ✍️ Typing practice is opened directly, never in 🔀 Shuffle.
+  bool get _showTypingTip => !widget.shuffle && _game == 3 && !_typingTipDismissed;
+
+  void _dismissTypingTip() {
+    if (_showTypingTip) _update(() => _typingTipDismissed = true);
+  }
+
+  Widget _typingTip() => const Padding(
+    key: ValueKey('typing_tip'),
+    padding: EdgeInsets.fromLTRB(8, 14, 8, 0),
+    child: Text(
+      'Tip: Use voice-to-text on your phone keyboard to turn this into speaking practice. '
+      'I use Gboard with the Korean language installed.',
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 13, height: 1.35, color: Color(0xFF8A7A9E)),
+    ),
+  );
 }

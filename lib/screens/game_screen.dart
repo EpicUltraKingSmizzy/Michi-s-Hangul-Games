@@ -63,6 +63,9 @@ class _GameScreenState extends State<GameScreen> {
   final _input = TextEditingController();
   final _focus = FocusNode();
 
+  /// ✍️ voice-to-text tip: hidden after the first input until the game is reopened.
+  bool _typingTipDismissed = false;
+
   Object? _round;
   int _roundId = 0;
   bool _locked = false;
@@ -723,6 +726,7 @@ class _GameScreenState extends State<GameScreen> {
       if (r.repetitions > 1) _progress(r),
       const SizedBox(height: 18),
       _controlRow(r.answer1.isNotEmpty ? _toggleHint : null),
+      if (_showTypingTip) _typingTip(),
     ];
   }
 

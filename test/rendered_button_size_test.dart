@@ -26,7 +26,10 @@ final _words = [
 /// Every Text drawn on screen is no taller than its own font allows: nothing
 /// is blown up by a FittedBox (rendered height ≤ fontSize × 1.6).
 void _noUpscaledText(WidgetTester tester, String why) {
-  for (final e in find.byType(Text).evaluate()) {
+  // The ✍️ voice-to-text tip is a paragraph, not button text.
+  final tip = find.descendant(of: find.byKey(const ValueKey('typing_tip')), matching: find.byType(Text));
+  final tipTexts = tip.evaluate().toSet();
+  for (final e in find.byType(Text).evaluate().where((e) => !tipTexts.contains(e))) {
     final t = e.widget as Text;
     final fs = t.style?.fontSize ?? DefaultTextStyle.of(e).style.fontSize ?? 14;
     final rendered = tester.getRect(find.byWidget(t).first).height;
