@@ -27,11 +27,17 @@ void main() {
       final editable = tester.widget<EditableText>(find.byType(EditableText));
       expect(editable.enableSuggestions, isTrue);
       expect(editable.keyboardType, TextInputType.text);
-      // 3️⃣ shows its hint at start, but never a 💡 label (a prompt word such as
-      // "Idea 💡" may legitimately contain one).
+      // 3️⃣ shows its hint at start, but never a 💡 label besides the 💡 hint
+      // button (a prompt word such as "Idea 💡" may legitimately contain one).
       final prompt =
           ((tester.state(find.byType(GameScreen)) as dynamic).currentRound).prompt as String;
-      if (!prompt.contains('💡')) expect(find.textContaining('💡'), findsNothing);
+      if (!prompt.contains('💡')) {
+        expect(find.textContaining('💡'), findsOneWidget);
+        expect(
+          find.descendant(of: find.byKey(const ValueKey('hint_button')), matching: find.text('💡')),
+          findsOneWidget,
+        );
+      }
     }
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));

@@ -65,6 +65,17 @@ void main() {
       }
     });
 
+    test('acceptedTileOrders are exactly what accepts() takes', () {
+      for (var seed = 0; seed < 40; seed++) {
+        final r = engine(sentenceMaster, seed).newRound(GameEngine.sentenceGame) as SentenceRound;
+        final orders = r.sentence.acceptedTileOrders;
+        expect(orders.any((o) => o.join('|') == r.answer.join('|')), isTrue);
+        for (final o in orders) {
+          expect(r.sentence.accepts(o), isTrue);
+        }
+      }
+    });
+
     test('no Verb Pack on: no 🏗️, and the other games get no verbs', () {
       final e =
           GameEngine([
@@ -325,6 +336,45 @@ void main() {
       await done(tester);
     });
 
+    testWidgets('🏗️ 💡: wrong tiles go back; any accepted order stays', (tester) async {
+      await setUp(tester, prefs: {AppState.kSentenceLevel: sentenceMaster});
+      await tester.pumpWidget(MaterialApp(home: GameScreen(key: UniqueKey(), game: 11)));
+      await tester.pump();
+      var r = state(tester).currentRound as SentenceRound;
+      while (r.sentence.units.length < 2) {
+        await tester.tap(find.text('➡️'));
+        await tester.pump(const Duration(milliseconds: 500));
+        r = state(tester).currentRound as SentenceRound;
+      }
+      final slots = state(tester).tileSlots;
+      // Another accepted order, all but its last tile: nothing is cleared.
+      final other = r.sentence.acceptedTileOrders.last;
+      await place(tester, other.sublist(0, other.length - 1));
+      await tester.tap(find.byKey(const ValueKey('hint_button')));
+      await tester.pump();
+      expect([
+        for (var i = 0; i < other.length - 1; i++) slots.charAt(i),
+      ], other.sublist(0, other.length - 1));
+      await tester.tap(find.byKey(const ValueKey('hint_button')));
+      await tester.pump();
+
+      // A decoy first, then the right second tile: only the decoy goes.
+      await tester.tap(find.byKey(const ValueKey('tile_backspace')));
+      for (var i = 0; i < other.length; i++) {
+        await tester.tap(find.byKey(const ValueKey('tile_backspace')));
+      }
+      await tester.pump();
+      expect(slots.isEmpty, isTrue);
+      final decoy = r.tiles.firstWhere((t) => !r.answer.contains(t));
+      await place(tester, [decoy, r.answer[1]]);
+      await tester.tap(find.byKey(const ValueKey('hint_button')));
+      await tester.pump();
+      expect(slots.tileAt(0), isNull);
+      expect(slots.charAt(1), r.answer[1]);
+      expect(find.byKey(const ValueKey('ghost_0')), findsOneWidget);
+      await done(tester);
+    });
+
     testWidgets('🏗️ play: any unit order wins; wrong tiles shake; hint and 🔊', (tester) async {
       await setUp(tester, prefs: {AppState.kSentenceLevel: sentenceMaster});
       await tester.pumpWidget(MaterialApp(home: GameScreen(key: UniqueKey(), game: 11)));
@@ -343,7 +393,7 @@ void main() {
 
       // Hint: faded answer, then 🔊 reads the whole sentence.
       expect(find.byKey(const ValueKey('hint_speak')), findsNothing);
-      await tester.tap(find.text('?'));
+      await tester.tap(find.text('💡'));
       await tester.pump();
       expect(find.byKey(const ValueKey('ghost_0')), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('hint_speak')));

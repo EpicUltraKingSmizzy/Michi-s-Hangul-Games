@@ -14,10 +14,7 @@ enum Tense { present, past, future }
 
 /// ⚙️ Options 🤖 Sentence difficulty steps.
 const sentenceLevelLabels = ['Easy', 'Medium', 'Hard', 'Master'];
-const int sentenceEasy = 0,
-    sentenceMedium = 1,
-    sentenceHard = 2,
-    sentenceMaster = 3;
+const int sentenceEasy = 0, sentenceMedium = 1, sentenceHard = 2, sentenceMaster = 3;
 
 // ------------------------------------------------------------------ Hangul
 
@@ -34,11 +31,9 @@ bool _isSyllable(int c) => c >= 0xAC00 && c <= 0xD7A3;
   return (x ~/ 588, (x % 588) ~/ 28, x % 28);
 }
 
-String _syllable(int i, int m, int f) =>
-    String.fromCharCode(_hangulBase + (i * 21 + m) * 28 + f);
+String _syllable(int i, int m, int f) => String.fromCharCode(_hangulBase + (i * 21 + m) * 28 + f);
 
-String _replaceLast(String s, String last) =>
-    s.substring(0, s.length - 1) + last;
+String _replaceLast(String s, String last) => s.substring(0, s.length - 1) + last;
 
 /// True when [word] ends in a consonant (받침).
 bool hasBatchim(String word) => (_lastJamo(word)?.$3 ?? 0) != 0;
@@ -65,9 +60,7 @@ String regularPolite(String dict) {
     case 11: // ㅚ → ㅙ
       return '${_replaceLast(stem, _syllable(i, 10, 0))}요';
     case 18: // ㅡ drops: ㅏ/ㅗ before it → ㅏ, else ㅓ
-      final prev = stem.length > 1
-          ? _lastJamo(stem.substring(0, stem.length - 1))
-          : null;
+      final prev = stem.length > 1 ? _lastJamo(stem.substring(0, stem.length - 1)) : null;
       final v = prev != null && (prev.$2 == 0 || prev.$2 == 8) ? 0 : 4;
       return '${_replaceLast(stem, _syllable(i, v, 0))}요';
     default:
@@ -82,9 +75,7 @@ class Conjugation {
   /// The 해요 form ([politeOverride] from the Verb Pack, else the rules).
   final String present;
   Conjugation(this.dict, {String politeOverride = ''})
-    : present = politeOverride.isNotEmpty
-          ? politeOverride
-          : regularPolite(dict);
+    : present = politeOverride.isNotEmpty ? politeOverride : regularPolite(dict);
 
   String get _stem => dict.substring(0, dict.length - 1);
 
@@ -229,8 +220,7 @@ class VerbFrame {
   /// The noun with 이/가 is the sentence's subject (수업이 끝나요).
   bool get hasNounSubject => slots.any((s) => s.particle == '이');
 
-  bool get usesTimeNoun =>
-      slots.any((s) => s.nouns.any((n) => n.kinds.contains('time_e')));
+  bool get usesTimeNoun => slots.any((s) => s.nouns.any((n) => n.kinds.contains('time_e')));
 }
 
 enum NegateMode { normal, split, none }
@@ -294,27 +284,11 @@ const subjectMe = Subject('저는', '', 'I', 'my', 'myself', third: false);
 const subjectHe = Subject('그는', '', 'he', 'his', 'himself', gender: 'he');
 const subjectShe = Subject('그녀는', '', 'she', 'her', 'herself', gender: 'she');
 const subjectFriend = Subject('친구', '가', 'my friend', 'their', 'themselves');
-const subjectSibling = Subject(
-  '동생',
-  '이',
-  'my younger sibling',
-  'their',
-  'themselves',
-);
-const allSubjects = [
-  subjectMe,
-  subjectHe,
-  subjectShe,
-  subjectFriend,
-  subjectSibling,
-];
+const subjectSibling = Subject('동생', '이', 'my younger sibling', 'their', 'themselves');
+const allSubjects = [subjectMe, subjectHe, subjectShe, subjectFriend, subjectSibling];
 
 const timeYesterday = '어제', timeToday = '오늘', timeTomorrow = '내일';
-const timeEnglish = {
-  timeYesterday: 'yesterday',
-  timeToday: 'today',
-  timeTomorrow: 'tomorrow',
-};
+const timeEnglish = {timeYesterday: 'yesterday', timeToday: 'today', timeTomorrow: 'tomorrow'};
 
 // --------------------------------------------------------------- English
 
@@ -370,15 +344,13 @@ String englishVerb(
     };
   }
   return switch (tense) {
-    Tense.present =>
-      third ? [_thirdPerson(words.first), ...words.skip(1)].join(' ') : base,
+    Tense.present => third ? [_thirdPerson(words.first), ...words.skip(1)].join(' ') : base,
     Tense.past => past,
     Tense.future => 'will $base',
   };
 }
 
-String _capitalize(String s) =>
-    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+String _capitalize(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
 String _bare(String phrase) => phrase.replaceFirst(RegExp(r'^(a|an|the) '), '');
 
@@ -421,18 +393,14 @@ class Sentence {
   bool get _split => negated && verb.negate == NegateMode.split;
 
   /// The pre-placed verb chip (먹어요; 해요 when 안 splits 공부 안 해요).
-  String get verbChip => _split
-      ? verb.conj.form(tense).substring(verb.splitNoun.length)
-      : verb.conj.form(tense);
+  String get verbChip =>
+      _split ? verb.conj.form(tense).substring(verb.splitNoun.length) : verb.conj.form(tense);
 
   /// Fixed chip before 안 in a split negation (공부), else ''.
   String get fixedBeforeNegation => _split ? verb.splitNoun : '';
 
   /// The slot tiles in the usual order (안 last when negated).
-  List<String> get answerTiles => [
-    for (final u in units) ...u,
-    if (negated) '안',
-  ];
+  List<String> get answerTiles => [for (final u in units) ...u, if (negated) '안'];
 
   String get korean {
     final parts = [for (final u in units) u.join()];
@@ -464,6 +432,24 @@ class Sentence {
 
     go([], units);
     return out.toSet().toList();
+  }
+
+  /// The slot tiles of every accepted order: the units in any order, each
+  /// kept together, then 안 when negated (the same orders as [accepts]).
+  List<List<String>> get acceptedTileOrders {
+    final out = <List<String>>[];
+    void go(List<String> done, List<List<String>> left) {
+      if (left.isEmpty) {
+        out.add([...done, if (negated) '안']);
+        return;
+      }
+      for (var i = 0; i < left.length; i++) {
+        go([...done, ...left[i]], [...left]..removeAt(i));
+      }
+    }
+
+    go([], units);
+    return out;
   }
 
   /// True when [placed] (slot tiles left to right) is the units in any
@@ -509,12 +495,7 @@ class SentenceBank {
   }) {
     final nouns = parseSentenceNouns(nounsTsv);
     final errors = <String>[];
-    final verbs = parseSentenceVerbs(
-      verbsIni,
-      nouns,
-      polite: polite,
-      errors: errors,
-    );
+    final verbs = parseSentenceVerbs(verbsIni, nouns, polite: polite, errors: errors);
     if (errors.isNotEmpty) throw FormatException(errors.join('\n'));
     return SentenceBank(nouns, verbs);
   }
@@ -536,9 +517,7 @@ class SentenceBank {
       n.sections = m.map((e) => e.sectionName).toSet();
     }
     for (final v in verbs) {
-      final m = builtIn.where(
-        (e) => verbPackIds.contains(e.packId) && e.korean1 == v.dict,
-      );
+      final m = builtIn.where((e) => verbPackIds.contains(e.packId) && e.korean1 == v.dict);
       if (m.length != 1) {
         errors.add(
           'verbs.ini [${v.dict}]: ${m.isEmpty ? 'not in a Verb Pack' : 'in more than one'}',
@@ -571,39 +550,22 @@ List<SentenceNoun> parseSentenceNouns(String tsv) => [
         SentenceNoun(
           korean: f[0].trim(),
           pack: f[1].trim(),
-          kinds: f[2]
-              .split(',')
-              .map((k) => k.trim())
-              .where((k) => k.isNotEmpty)
-              .toSet(),
+          kinds: f[2].split(',').map((k) => k.trim()).where((k) => k.isNotEmpty).toSet(),
           english: f[3].trim(),
           general: f.length > 4 ? f[4].trim() : '',
           at: f.length > 5 ? f[5].trim() : '',
           to: f.length > 6 ? f[6].trim() : '',
-          plural:
-              f.length > 7 &&
-              f[7].split(',').map((x) => x.trim()).contains('pl'),
+          plural: f.length > 7 && f[7].split(',').map((x) => x.trim()).contains('pl'),
           owner: f.length > 7
               ? f[7]
                     .split(',')
                     .map((x) => x.trim())
-                    .firstWhere(
-                      (x) => x == 'he' || x == 'she',
-                      orElse: () => '',
-                    )
+                    .firstWhere((x) => x == 'he' || x == 'she', orElse: () => '')
               : '',
         ),
 ];
 
-const _verbKeys = {
-  'say',
-  'frame',
-  'tenses',
-  'timewords',
-  'negate',
-  'english',
-  'alsook',
-};
+const _verbKeys = {'say', 'frame', 'tenses', 'timewords', 'negate', 'english', 'alsook'};
 final _placeholder = RegExp(r'\{([a-z]+ )?(\d|v|my|self)\}');
 
 (String, String)? _parseSay(String s) {
@@ -632,12 +594,8 @@ List<SentenceVerb> parseSentenceVerbs(
         if (!kinds.contains(tok)) errs.add('$where: unknown kind $tok');
         found = nouns.where((n) => n.kinds.contains(tok)).toList();
       } else {
-        final (ko, pack) = tok.contains('@')
-            ? (tok.split('@')[0], tok.split('@')[1])
-            : (tok, '');
-        found = nouns
-            .where((n) => n.korean == ko && (pack.isEmpty || n.pack == pack))
-            .toList();
+        final (ko, pack) = tok.contains('@') ? (tok.split('@')[0], tok.split('@')[1]) : (tok, '');
+        found = nouns.where((n) => n.korean == ko && (pack.isEmpty || n.pack == pack)).toList();
         if (found.isEmpty) errs.add('$where: unknown noun $tok');
         if (found.length > 1) {
           errs.add('$where: $tok is in two packs (use $tok@pack)');
@@ -676,9 +634,7 @@ List<SentenceVerb> parseSentenceVerbs(
         if (!particleKeys.contains(particle)) {
           errs.add('$where: unknown particle $particle');
         }
-        final ns = i < 0
-            ? <SentenceNoun>[]
-            : resolve(where, spec.substring(i + 1));
+        final ns = i < 0 ? <SentenceNoun>[] : resolve(where, spec.substring(i + 1));
         if (ns.isEmpty) errs.add('$where: no nouns in $spec');
         slots.add(FrameSlot(particle, ns));
       }
@@ -758,19 +714,14 @@ class SentenceMaker {
 
   /// Chance of a subject at Medium+, a time word at Hard+, a two-noun frame
   /// and 안 at Master.
-  static const subjectChance = 0.7,
-      timeChance = 0.6,
-      comboChance = 0.4,
-      negChance = 0.3;
+  static const subjectChance = 0.7, timeChance = 0.6, comboChance = 0.4, negChance = 0.3;
 
   T _pick<T>(List<T> xs) => xs[rand.nextInt(xs.length)];
 
   /// Tenses [verb] can use at [level] (present only below Hard).
   static List<Tense> tensesAt(SentenceVerb verb, int level) => [
     for (final t in Tense.values)
-      if (verb.tenses.contains(t) &&
-          (level >= sentenceHard || t == Tense.present))
-        t,
+      if (verb.tenses.contains(t) && (level >= sentenceHard || t == Tense.present)) t,
   ];
 
   /// [verb]'s frames usable at [level] whose slots can all be filled from
@@ -787,23 +738,16 @@ class SentenceMaker {
   ];
 
   /// Whether [verb] can make a sentence at [level].
-  static bool canMake(SentenceVerb verb, int level) =>
-      tensesAt(verb, level).isNotEmpty;
+  static bool canMake(SentenceVerb verb, int level) => tensesAt(verb, level).isNotEmpty;
 
   /// Subjects allowed with these nouns (no peer subject next to a person
   /// noun; 형/아내 only with a male owner, 남편 with a female one).
   static List<Subject> subjectsFor(List<SentenceNoun> nouns) {
-    final people = nouns.any(
-      (n) => n.kinds.contains('person') || n.kinds.contains('peer'),
-    );
-    final owner = nouns
-        .map((n) => n.owner)
-        .firstWhere((o) => o.isNotEmpty, orElse: () => '');
+    final people = nouns.any((n) => n.kinds.contains('person') || n.kinds.contains('peer'));
+    final owner = nouns.map((n) => n.owner).firstWhere((o) => o.isNotEmpty, orElse: () => '');
     return [
       for (final s in allSubjects)
-        if (!(people && !s.isPronoun) &&
-            (owner.isEmpty || s == subjectMe || s.gender == owner))
-          s,
+        if (!(people && !s.isPronoun) && (owner.isEmpty || s == subjectMe || s.gender == owner)) s,
     ];
   }
 
@@ -817,11 +761,7 @@ class SentenceMaker {
   /// A random sentence for [verb] at [level]. Nouns come from [preferred]
   /// when some frame can be filled from it, else from every noun. Null when
   /// the verb can't make a sentence at [level] (태어나다 below Hard).
-  Sentence? make(
-    SentenceVerb verb,
-    int level, {
-    bool Function(SentenceNoun)? preferred,
-  }) {
+  Sentence? make(SentenceVerb verb, int level, {bool Function(SentenceNoun)? preferred}) {
     final tenses = tensesAt(verb, level);
     if (tenses.isEmpty) return null;
     var pool = preferred;
@@ -832,22 +772,16 @@ class SentenceMaker {
     }
     final combos = frames.where((f) => f.isCombo).toList();
     final singles = frames.where((f) => !f.isCombo).toList();
-    final frame =
-        combos.isNotEmpty &&
-            (singles.isEmpty || rand.nextDouble() < comboChance)
+    final frame = combos.isNotEmpty && (singles.isEmpty || rand.nextDouble() < comboChance)
         ? _pick(combos)
         : _pick(singles);
     final nouns = <SentenceNoun>[];
     for (final s in frame.slots) {
-      final options = s.nouns
-          .where((n) => (pool?.call(n) ?? true) && !nouns.contains(n))
-          .toList();
+      final options = s.nouns.where((n) => (pool?.call(n) ?? true) && !nouns.contains(n)).toList();
       nouns.add(_pick(options.isEmpty ? s.nouns : options));
     }
     Subject? subject;
-    if (level >= sentenceMedium &&
-        !frame.hasNounSubject &&
-        rand.nextDouble() < subjectChance) {
+    if (level >= sentenceMedium && !frame.hasNounSubject && rand.nextDouble() < subjectChance) {
       final options = subjectsFor(nouns);
       if (options.isNotEmpty) subject = _pick(options);
     }
@@ -860,9 +794,7 @@ class SentenceMaker {
       time = _pick(timesFor(tense));
     }
     final negated =
-        level >= sentenceMaster &&
-        verb.negate != NegateMode.none &&
-        rand.nextDouble() < negChance;
+        level >= sentenceMaster && verb.negate != NegateMode.none && rand.nextDouble() < negChance;
     return build(
       verb,
       frame,
@@ -890,10 +822,7 @@ class SentenceMaker {
       if (subject != null) subject.tiles,
       if (time.isNotEmpty) [time],
       for (var i = 0; i < nouns.length; i++)
-        [
-          nouns[i].korean,
-          particleFor(frame.slots[i].particle, nouns[i].korean),
-        ],
+        [nouns[i].korean, particleFor(frame.slots[i].particle, nouns[i].korean)],
     ];
     final english = englishFor(
       verb,
@@ -916,19 +845,14 @@ class SentenceMaker {
       final key = frame.slots[i].particle;
       final ko = nouns[i].korean;
       add(wrongParticleForm(key, ko));
-      final roles = roleDecoys[key]!
-          .where((r) => !verb.alsoOk.contains(r))
-          .toList();
+      final roles = roleDecoys[key]!.where((r) => !verb.alsoOk.contains(r)).toList();
       if (roles.isNotEmpty) add(particleFor(_pick(roles), ko));
     }
     if (level >= sentenceMedium && !frame.hasNounSubject) {
       if (subject == null) {
         add(_pick([subjectHe, subjectShe]).korean);
       } else if (subject.isPronoun) {
-        add(
-          _pick(allSubjects.where((s) => s.isPronoun && s != subject).toList())
-              .korean,
-        );
+        add(_pick(allSubjects.where((s) => s.isPronoun && s != subject).toList()).korean);
       } else {
         add((subject == subjectFriend ? subjectSibling : subjectFriend).korean);
       }
@@ -996,10 +920,7 @@ class SentenceMaker {
         'at' => n.at.isNotEmpty ? n.at : 'at ${n.english}',
         'to' => n.to.isNotEmpty ? n.to : 'to ${n.english}',
         'by' => 'by ${_bare(n.english)}',
-        _ =>
-          tense == Tense.present && time.isEmpty && n.general.isNotEmpty
-              ? n.general
-              : n.english,
+        _ => tense == Tense.present && time.isEmpty && n.general.isNotEmpty ? n.general : n.english,
       };
     });
     text = text.replaceAll('{my}', possessive).replaceAll('{self}', reflexive);
@@ -1027,21 +948,11 @@ class SentenceMaker {
     }
   }
 
-  Iterable<Sentence> _variants(
-    SentenceVerb verb,
-    VerbFrame frame,
-    List<SentenceNoun> nouns,
-  ) sync* {
-    final subjects = <Subject?>[
-      null,
-      if (!frame.hasNounSubject) ...subjectsFor(nouns),
-    ];
+  Iterable<Sentence> _variants(SentenceVerb verb, VerbFrame frame, List<SentenceNoun> nouns) sync* {
+    final subjects = <Subject?>[null, if (!frame.hasNounSubject) ...subjectsFor(nouns)];
     for (final subject in subjects) {
       for (final tense in verb.tenses) {
-        final times = [
-          '',
-          if (verb.timeWords && !frame.usesTimeNoun) ...timesFor(tense),
-        ];
+        final times = ['', if (verb.timeWords && !frame.usesTimeNoun) ...timesFor(tense)];
         for (final time in times) {
           for (final neg in [false, if (verb.negate != NegateMode.none) true]) {
             var level = sentenceEasy;

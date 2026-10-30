@@ -140,6 +140,8 @@ class _GameScreenState extends State<GameScreen> {
   TileSlots? get tileSlots => _slots;
   @visibleForTesting
   (int, int)? get wrongLine => _wrongLine;
+  @visibleForTesting
+  String? get period => _period;
 
   /// [setState] for the per-game parts (extensions can't call it directly).
   void _update(VoidCallback fn) => setState(fn);
@@ -794,7 +796,7 @@ class _GameScreenState extends State<GameScreen> {
     final keypad = isKeypadRound(r);
     return [
       _promptCard(r.prompt, r.promptIsKorean, english: r.promptEnglish),
-      // Hint text (answer), toggled by the ? button.
+      // Hint text (answer), toggled by the 💡 button.
       AnimatedSize(
         duration: const Duration(milliseconds: 200),
         child: _hintVisible && slots == null
@@ -886,7 +888,31 @@ class _GameScreenState extends State<GameScreen> {
     return r is TimeRound ? r.korean : (r as TypingRound).answer1;
   }
 
+  /// The accepted answers one piece per slot, for the hint's clean-up of
+  /// wrongly placed tiles (null in rounds without slots).
+  List<List<String>>? get _slotAnswers {
+    final r = _round;
+    final slots = _slots;
+    if (slots == null) return null;
+    List<String> chars(String a) => stripSpaces(a).split('');
+    if (r is SentenceRound) return r.sentence.acceptedTileOrders;
+    if (r is TimeRound) return [for (final a in r.accepted) chars(a)];
+    if (r is TypingRound) {
+      return [
+        for (final a in {r.answer1, if (r.answer2.isNotEmpty) r.answer2, ...r.alsoAccepted})
+          if (chars(a).length == slots.length) chars(a),
+      ];
+    }
+    return null;
+  }
+
+  /// 💡 hint. In 🧩 🌀 🏗️ 🕒 it first sends wrongly placed tiles back to the
+  /// pile (and in 🕒 clears a wrong 오전 / 오후).
   void _toggleHint() => setState(() {
+    final answers = _slotAnswers;
+    if (answers != null && !_locked) _slots!.removeWrong(answers);
+    final r = _round;
+    if (r is TimeRound && _period != null && _period != r.period) _period = null;
     _hintVisible = !_hintVisible;
     if (_ghostChars != null) _hintUsed = true;
   });
@@ -939,7 +965,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// ➡️ next (no score), ↩️ back to the menu, ? hint (typing rounds only).
+  /// ➡️ next (no score), ↩️ back to the menu, 💡 hint (typing rounds only).
   Widget _controlRow(VoidCallback? onHint, {Widget? extra}) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
@@ -960,8 +986,9 @@ class _GameScreenState extends State<GameScreen> {
         BouncyButton(
           color: const Color(0xFF7B5CFF),
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 16),
+          key: const ValueKey('hint_button'),
           onTap: onHint,
-          child: const Text('?', style: TextStyle(fontSize: 30)),
+          child: const Text('💡', style: TextStyle(fontSize: 30)),
         ),
       ],
     ],

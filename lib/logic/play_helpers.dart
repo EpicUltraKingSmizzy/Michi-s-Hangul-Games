@@ -69,6 +69,33 @@ class TileSlots {
   }
 
   void clear() => _slots.fillRange(0, _slots.length, null);
+
+  /// Hint: sends back to the pile every placed tile that is not where an
+  /// accepted answer has it. [answers] are the accepted answers, one piece
+  /// per slot (a shorter answer leaves the slots after it empty). The answer
+  /// agreeing with the most placed tiles is followed, so what stays can
+  /// always be finished into an accepted answer. Returns the slots emptied.
+  List<int> removeWrong(Iterable<List<String>> answers) {
+    List<int> wrongFor(List<String> a) => [
+      for (var i = 0; i < _slots.length; i++)
+        if (_slots[i] != null && (i >= a.length || tiles[_slots[i]!] != a[i])) i,
+    ];
+    List<int>? best;
+    for (final a in answers) {
+      final w = wrongFor(a);
+      if (best == null || w.length < best.length) best = w;
+    }
+    final out =
+        best ??
+        [
+          for (var i = 0; i < _slots.length; i++)
+            if (_slots[i] != null) i,
+        ];
+    for (final i in out) {
+      _slots[i] = null;
+    }
+    return out;
+  }
 }
 
 /// Consecutive right answers in one visit to a game.
