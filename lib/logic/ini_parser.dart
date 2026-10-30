@@ -9,7 +9,7 @@ import '../models/vocab_entry.dart';
 /// the file it is in. Word keys (case-insensitive): English1, English2, Emoji,
 /// Korean1, Korean2, AlsoPacks (comma-separated extra pack ids or names),
 /// IsFullPhrase, Polite (a Verb Pack word's polite 해요 form, given for
-/// irregular verbs; checked by the validator, not used yet). Blank lines and lines starting with `;` or `#` are skipped.
+/// irregular verbs; see [parsePoliteForms]). Blank lines and lines starting with `;` or `#` are skipped.
 const String vocabDir = 'assets/vocab';
 const String vocabIndexAsset = '$vocabDir/index.txt';
 String packAsset(String id) => '$vocabDir/$id.ini';
@@ -137,6 +137,12 @@ List<VocabEntry> loadBuiltInVocab(String index, String Function(String id) readP
       ),
   ];
 }
+
+/// Korean1 → Polite form for every word in a pack file that gives one.
+Map<String, String> parsePoliteForms(String content) => {
+  for (final s in parseSections(content))
+    if (s.name != packHeaderSection && s.get('polite').isNotEmpty) s.get('korean1'): s.get('polite'),
+};
 
 /// Problems in the vocab files (empty when all is well): bad or mismatched
 /// pack headers, duplicate section names across files, unknown AlsoPacks ids,

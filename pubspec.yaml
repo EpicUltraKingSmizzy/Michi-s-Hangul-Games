@@ -61,6 +61,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/vocab/
+    - assets/sentences/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
