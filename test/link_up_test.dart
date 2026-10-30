@@ -450,13 +450,13 @@ void main() {
     });
 
     test('🔟 tile info', () {
-      expect(GameEngine.gameCount, 10);
+      expect(GameEngine.gameCount, 11);
       final info = gameInfos[GameEngine.linkUpGame - 1];
       expect(info.keycap, '🔟', reason: 'internal only');
       expect(info.tileName, '🔗 Link Up');
       expect(info.emoji, '🔗');
       expect(info.subtitle, 'Link Up');
-      final others = [...gameInfos.take(9).map((g) => g.color), shuffleInfo.color];
+      final others = [...gameInfos.where((g) => g != info).map((g) => g.color), shuffleInfo.color];
       expect(others, isNot(contains(info.color)), reason: 'its own colour');
     });
   });

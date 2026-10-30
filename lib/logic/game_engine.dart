@@ -5,10 +5,12 @@ import '../data/bundles.dart' show customBundleId;
 import '../models/vocab_entry.dart';
 import 'color_game.dart';
 import 'link_game.dart';
+import 'sentences.dart';
 import 'time_game.dart';
 
 export 'color_game.dart';
 export 'link_game.dart';
+export 'sentences.dart';
 export 'time_game.dart';
 import 'number_translation.dart';
 
@@ -83,6 +85,22 @@ class TypingRound {
   });
 }
 
+/// A 🧱 Sentence Builder round: the English to build, the slot tiles in
+/// the usual order (the verb is pre-placed) and the tile pile with decoys.
+class SentenceRound {
+  final Sentence sentence;
+
+  /// Answer tiles and decoys, shuffled.
+  final List<String> tiles;
+
+  /// The verb's word (its wins go to its Verb Pack).
+  final VocabEntry? word;
+  const SentenceRound({required this.sentence, required this.tiles, this.word});
+
+  /// The correct tile per slot, in the usual order.
+  List<String> get answer => sentence.answerTiles;
+}
+
 /// Pure (UI-free) port of the LINQPad game logic.
 class GameEngine {
   static const int answerCount = 3; // Game 1 & 2 option count
@@ -107,7 +125,14 @@ class GameEngine {
   static const nativeMaxStops = [10, 30, 50, 99];
   static const defaultNativeMax = 10;
   static const int newGameDelayMs = 300;
-  static const int gameCount = 10;
+  static const int gameCount = 11;
+
+  /// 🧱 Sentence Builder: build a Korean sentence from word tiles.
+  static const int sentenceGame = 11;
+
+  /// Sentences in 🔟 🔗 Link Up and the syllable games stay this short.
+  static const int maxSentenceSyllables = maximumCharacterScrambleLength;
+  static const int maxLinkSentenceEnglish = 24;
 
   /// 🔟 🔗 Link Up: match [LinkRound.size] Korean words to their emoji/English.
   static const int linkUpGame = 10;
@@ -143,7 +168,155 @@ class GameEngine {
 
   /// The words games 1-6 draw from. With emojis off, a word with no real
   /// English (empty, or only an emoji) sits out, so no emoji leaks through.
-  List<VocabEntry> get playList => useEmoji ? vocabList : vocabList.where(hasPlainEnglish).toList();
+  /// A Verb Pack verb is in play as a sentence (see [verbOf]) when it can
+  /// make one at [sentenceLevel].
+  List<VocabEntry> get playList => [
+    for (final e in vocabList)
+      if ((useEmoji || hasPlainEnglish(e)) && _verbFits(e)) e,
+  ];
+
+  // ---------------------------------------------------------------- 🧱 sentences
+
+  /// 🧱 data (null until the app loads it: then no verbs and no 🧱).
+  SentenceBank? get sentenceBank => _bank;
+  set sentenceBank(SentenceBank? b) {
+    _bank = b;
+    _verbBySection = {for (final v in b?.verbs ?? const <SentenceVerb>[]) v.section: v};
+  }
+
+  SentenceBank? _bank;
+  Map<String, SentenceVerb> _verbBySection = {};
+
+  /// 🧱 difficulty (Easy..Master), also for verbs in the other games.
+  int sentenceLevel = sentenceEasy;
+
+  /// Every Verb Pack word by section (switched on or not), so 🧱 can use
+  /// all verbs when no Verb Pack is on.
+  Map<String, VocabEntry> verbWords = {};
+
+  /// The verb behind a Verb Pack word in play; null for every other word.
+  SentenceVerb? verbOf(VocabEntry e) => _verbBySection[e.sectionName];
+
+  bool _verbFits(VocabEntry e) {
+    final v = verbOf(e);
+    return v == null || SentenceMaker.canMake(v, sentenceLevel);
+  }
+
+  /// [playList] without the verbs: the decoys for ordinary words.
+  List<VocabEntry> get _wordsOnly => [
+    for (final e in playList)
+      if (verbOf(e) == null) e,
+  ];
+
+  /// The sentence behind a generated sentence entry (for its other orders).
+  final Expando<Sentence> _sentenceOf = Expando();
+
+  /// Nouns of the Word Packs that are on (🧱 prefers these).
+  bool Function(SentenceNoun) _preferredNouns() {
+    final active = {for (final e in vocabList) e.sectionName};
+    return (n) => n.sections.any(active.contains);
+  }
+
+  /// A sentence for [verb] at [sentenceLevel] that [fits]; failing that,
+  /// at a lower level (so a syllable game gets a short one). Null if none.
+  Sentence? makeSentence(SentenceVerb verb, {bool Function(Sentence)? fits}) {
+    final maker = SentenceMaker(rand);
+    final preferred = _preferredNouns();
+    for (var level = sentenceLevel; level >= sentenceEasy; level--) {
+      for (var i = 0; i < 12; i++) {
+        final s = maker.make(verb, level, preferred: preferred);
+        if (s == null) break;
+        if (fits == null || fits(s)) return s;
+      }
+    }
+    return null;
+  }
+
+  /// A word-like entry for [s]: Korean and English of the whole sentence,
+  /// counting for [word] (the verb) and its Verb Pack.
+  VocabEntry sentenceEntry(Sentence s, VocabEntry word) {
+    final e = VocabEntry(
+      sectionName: word.sectionName,
+      packId: word.packId,
+      alsoPacks: word.alsoPacks,
+      english1: s.english,
+      korean1: s.korean,
+      isFullPhrase: true,
+    );
+    _sentenceOf[e] = s;
+    return e;
+  }
+
+  /// [e] itself, or for a verb a sentence entry that [fits] (null if the
+  /// verb can't make one).
+  VocabEntry? _asPlayed(VocabEntry e, {bool Function(Sentence)? fits}) {
+    final v = verbOf(e);
+    if (v == null) return e;
+    final s = makeSentence(v, fits: fits);
+    return s == null ? null : sentenceEntry(s, e);
+  }
+
+  /// Fits the 🧩/🌀 slots: at most [maxSentenceSyllables] syllables.
+  static bool shortSentence(Sentence s) => stripSpaces(s.korean).length <= maxSentenceSyllables;
+
+  /// Fits a 🔗 card.
+  static bool linkSentence(Sentence s) =>
+      shortSentence(s) && s.english.length <= maxLinkSentenceEnglish;
+
+  /// Up to [count] sentences of other verbs (in play first, then any), for
+  /// decoys next to sentence [target]. Never single words.
+  List<VocabEntry> otherSentences(
+    VocabEntry target,
+    int count, {
+    bool Function(Sentence)? fits,
+  }) {
+    final own = verbOf(target);
+    final inPlay = _shuffled(playList.where((e) => verbOf(e) != null && verbOf(e) != own));
+    final rest = _shuffled(
+      verbWords.values.where((e) => verbOf(e) != null && verbOf(e) != own && !inPlay.contains(e)),
+    );
+    final out = <VocabEntry>[target];
+    for (final w in [...inPlay, ...rest]) {
+      if (out.length > count) break;
+      final s = makeSentence(verbOf(w)!, fits: fits);
+      if (s == null) continue;
+      final e = sentenceEntry(s, w);
+      if (out.any((o) => entriesClash(o, e, useEmoji: useEmoji, showBracketNotes: showBracketNotes))) {
+        continue;
+      }
+      out.add(e);
+    }
+    return out.sublist(1);
+  }
+
+  /// 🧱: a sentence for a verb of the Verb Packs that are on (every verb
+  /// when none is on), not one of the last few, at [sentenceLevel]; nouns
+  /// from the Word Packs that are on when the verb can use them.
+  SentenceRound sentenceRound() {
+    final on = [
+      for (final e in vocabList)
+        if (verbOf(e) case final v? when SentenceMaker.canMake(v, sentenceLevel)) e,
+    ];
+    final all = [
+      for (final e in verbWords.values)
+        if (verbOf(e) case final v? when SentenceMaker.canMake(v, sentenceLevel)) e,
+    ];
+    final pool = on.isNotEmpty ? on : all;
+    final history = gameHistory[sentenceGame]!;
+    var valid = pool.where((e) => !history.contains(e.sectionName)).toList();
+    if (valid.isEmpty) {
+      history.clear();
+      valid = pool;
+    }
+    final word = valid[rand.nextInt(valid.length)];
+    logGameTarget(word.sectionName);
+    final s = makeSentence(verbOf(word)!)!;
+    return SentenceRound(
+      sentence: s,
+      tiles: _shuffled([...s.answerTiles, ...s.decoys]),
+      word: word,
+    );
+  }
 
   static final _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
 
@@ -174,35 +347,40 @@ class GameEngine {
   /// false = Korean → pick the meaning). Null picks at random each round.
   static bool? pickKoreanFormat;
   bool canPlay(int game) {
+    if (game == sentenceGame) return _bank != null && verbWords.isNotEmpty;
     if (!usesVocab(game)) return true;
     if (game == linkUpGame) return canLinkUp;
     return hasEnoughEntries;
   }
 
-  /// Builds the next round for [game] (1-10). Returns a [ChoiceRound], a
-  /// [TypingRound] or (9️⃣) a [ColorRound].
+  /// Builds the next round for [game] (1-11). Returns a [ChoiceRound], a
+  /// [TypingRound], (9️⃣) a [ColorRound] or (🧱) a [SentenceRound].
   Object newRound(int game) {
     currentGame = game;
     switch (game) {
       case 1:
         // 🔍 Pick the meaning: Korean → pick the meaning, or (the old 🎯
         // Pick the Korean) emoji/English → pick the Korean, at random.
-        final t = getGameTarget();
-        return matchingGame(t, getWrongAnswers(t, playList), pickKoreanFormat ?? rand.nextBool());
+        final t = _playedTarget();
+        // A sentence's wrong answers are other sentences, never words.
+        final wrong = _sentenceOf[t] != null ? otherSentences(t, 2) : getWrongAnswers(t, _wordsOnly);
+        return matchingGame(t, wrong, pickKoreanFormat ?? rand.nextBool());
       case timeGame:
         return newTimeRound(rand, recent: gameHistory[timeGame]);
       case 3:
-        return createTextBoxGame(getGameTarget(), gameRepetitionCount: game3Repetitions);
+        return createTextBoxGame(_playedTarget(), gameRepetitionCount: game3Repetitions);
       case 4:
-        return createTextBoxGame(getGameTarget(), showHintAtStart: false);
+        return createTextBoxGame(_playedTarget(), showHintAtStart: false);
       case 5:
         return createTextBoxGame(_scrambleTarget(), showHintAtStart: false, helperButtons: true);
       case 6:
+        final t = _scrambleTarget();
         return createTextBoxGame(
-          _scrambleTarget(),
+          t,
           showHintAtStart: false,
           helperButtons: true,
           includeWrongOptions: true,
+          wrongOptions: _sentenceOf[t] == null ? null : _sentenceDecoyChars(t),
         );
       case 7:
         return numberGame();
@@ -216,6 +394,8 @@ class GameEngine {
         return r;
       case linkUpGame:
         return linkRound();
+      case sentenceGame:
+        return sentenceRound();
       default:
         throw ArgumentError('Unknown game $game');
     }
@@ -269,7 +449,18 @@ class GameEngine {
     return target;
   }
 
-  /// Target selection for games 5 & 6 (with the Korean2 `<=` max fix).
+  /// A target for 1️⃣ 3️⃣ 4️⃣: a verb comes as a sentence at [sentenceLevel].
+  VocabEntry _playedTarget() {
+    for (var i = 0; i < 5; i++) {
+      final e = _asPlayed(getGameTarget());
+      if (e != null) return e;
+    }
+    final words = _wordsOnly;
+    return words.isEmpty ? getGameTarget() : words[rand.nextInt(words.length)];
+  }
+
+  /// Target selection for games 5 & 6 (with the Korean2 `<=` max fix). A
+  /// verb comes as a short sentence (at most [maxSentenceSyllables]).
   VocabEntry _scrambleTarget() {
     final play = playList;
     var valid = filteredVocabList();
@@ -277,11 +468,34 @@ class GameEngine {
         s.isNotEmpty &&
         s.length >= minimumCharacterScrambleLength &&
         s.length <= maximumCharacterScrambleLength;
-    valid = valid.where((x) => okLen(x.korean1) || okLen(x.korean2)).toList();
+    valid = valid.where((x) => verbOf(x) != null || okLen(x.korean1) || okLen(x.korean2)).toList();
     if (valid.isEmpty) valid = List.of(play);
-    final target = valid[rand.nextInt(valid.length)];
+    for (var i = 0; i < 5; i++) {
+      final target = valid[rand.nextInt(valid.length)];
+      final played = _asPlayed(target, fits: shortSentence);
+      if (played == null) continue;
+      logGameTarget(target.sectionName);
+      return played;
+    }
+    final words = valid.where((x) => verbOf(x) == null).toList();
+    final target = (words.isEmpty ? play : words)[rand.nextInt((words.isEmpty ? play : words).length)];
     logGameTarget(target.sectionName);
     return target;
+  }
+
+  /// 🌀 decoy letters for a sentence: from other sentences first (wrong
+  /// particles and endings look alike), then from the words in play.
+  List<String> _sentenceDecoyChars(VocabEntry target) {
+    final a1 = stripSpaces(target.korean1);
+    final need = max(3, a1.length);
+    final wrong = getWrongCharacters(a1, target, otherSentences(target, 3), optionCount: need);
+    if (wrong.length < need) {
+      for (final c in getWrongCharacters(a1, target, _wordsOnly, optionCount: need)) {
+        if (wrong.length == need) break;
+        if (!wrong.contains(c)) wrong.add(c);
+      }
+    }
+    return wrong;
   }
 
   /// True when two entries would look identical (or both be correct) in a
@@ -380,8 +594,9 @@ class GameEngine {
   /// [words] split into the kinds (single words, full phrases) that can fill
   /// a whole board on their own.
   List<List<VocabEntry>> _linkKinds(Iterable<VocabEntry> words) {
-    final single = words.where((x) => !x.isFullPhrase).toList();
-    final phrases = words.where((x) => x.isFullPhrase).toList();
+    // Verbs come as sentences, so they go with the full phrases.
+    final single = words.where((x) => !x.isFullPhrase && verbOf(x) == null).toList();
+    final phrases = words.where((x) => x.isFullPhrase || verbOf(x) != null).toList();
     return [if (_linkFills(single)) single, if (_linkFills(phrases)) phrases];
   }
 
@@ -441,6 +656,8 @@ class GameEngine {
     for (final w in words) {
       logGameTarget(w.sectionName);
     }
+    // Verbs become short sentences that fit a card.
+    words = [for (final w in words) _asPlayed(w, fits: linkSentence) ?? w];
     final pairs = [
       for (final w in words) LinkPair(
           word: w,
@@ -549,7 +766,7 @@ class GameEngine {
 
     final answerChars = a1.split('').where((c) => c.trim().isNotEmpty).toList();
     if (includeWrongOptions && wrongOptions == null) {
-      wrongOptions = getWrongCharacters(a1, target, playList, koreanCharacters: targetIsEnglish);
+      wrongOptions = getWrongCharacters(a1, target, _wordsOnly, koreanCharacters: targetIsEnglish);
     }
     var charList = <String>[];
     if (helperButtons) {
@@ -557,8 +774,10 @@ class GameEngine {
     }
     final alsoAccepted = <String>[
       // Not for generated number-game entries (no section): 7️⃣/8️⃣ must stay exact.
-      if (targetIsEnglish && target.sectionName.isNotEmpty)
-        for (final o in playList)
+      // A sentence: its units in any other order.
+      ...?_sentenceOf[target]?.allOrders,
+      if (targetIsEnglish && target.sectionName.isNotEmpty && _sentenceOf[target] == null)
+        for (final o in _wordsOnly)
           // Another card showing the same prompt, or with the same English
           // word when the prompt is English (부모 / 부모님 for "Parents"; with
           // bracket notes off, 밥 / 쌀 for "Rice").

@@ -110,7 +110,7 @@ void main() {
         seen.add(g);
         prev = g;
       }
-      expect(seen, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+      expect(seen, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11});
       expect(repeats, greaterThan(0));
     });
 
@@ -120,7 +120,7 @@ void main() {
       for (var i = 0; i < 2000; i++) {
         seen.add(pickShuffleGame(rand, enabled: (g) => g != 3, canPlay: (_) => true)!);
       }
-      expect(seen, {1, 2, 4, 5, 6, 7, 8, 9, 10});
+      expect(seen, {1, 2, 4, 5, 6, 7, 8, 9, 10, 11});
       final engine = GameEngine([], random: Random(4));
       seen.clear();
       for (var i = 0; i < 500; i++) {
@@ -251,7 +251,7 @@ void main() {
     });
 
     testWidgets('🔀 Shuffle: streak and wins carry across games, stats per game', (tester) async {
-      await setUpApp(tester, packsOff: true); // only 7️⃣ 8️⃣ 9️⃣ playable
+      await setUpApp(tester, packsOff: true); // only word-free games and 🧱 playable
       final before9 = appState.sessionWins[9]!;
       final beforeShuffle = appState.shuffleSessionWins;
       await tester.pumpWidget(MaterialApp(home: GameScreen.shuffle(key: UniqueKey())));
@@ -260,7 +260,7 @@ void main() {
       var wins = 0;
       for (var i = 0; i < 40 && wins < 6; i++) {
         final game = stateOf(tester).currentGame as int;
-        expect([2, 7, 8, 9], contains(game));
+        expect([2, 7, 8, 9, 11], contains(game));
         expect(
           tester.widget<Text>(find.byKey(const ValueKey('shuffle_game_name'))).data,
           gameInfos[game - 1].tileName,

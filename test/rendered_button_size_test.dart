@@ -53,8 +53,11 @@ void main() {
           AppState.kButtonFont: step,
         });
         await tester.runAsync(appState.load);
+        final verbs = appState.engine.verbWords;
         for (var g = 1; g <= GameEngine.gameCount; g++) {
-          appState.engine = GameEngine(_words, random: Random(g));
+          appState.engine = GameEngine(_words, random: Random(g))
+            ..sentenceBank = appState.sentenceBank
+            ..verbWords = verbs;
           await tester.pumpWidget(
             MaterialApp(
               home: GameScreen(key: UniqueKey(), game: g),

@@ -187,7 +187,7 @@ void main() {
       expect(GameEngine.usesVocab(GameEngine.timeGame), isFalse);
       expect(gameInfos[1].tileName, contains('What Time Is It?'));
       expect(gameInfos[1].color, const Color(0xFF7CB518));
-      expect(gameOrder, [1, 9, 3, 4, 5, 6, 7, 8, 2, 10]);
+      expect(gameOrder, [1, 9, 3, 4, 5, 6, 11, 7, 8, 2, 10]);
     });
   });
 

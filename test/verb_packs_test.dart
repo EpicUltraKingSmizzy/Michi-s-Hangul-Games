@@ -57,14 +57,18 @@ void main() {
     },
   );
 
-  test('verb words are never in play, even with their packs on', () async {
+  test('verb words are in play (as sentences) only with their packs on', () async {
     SharedPreferences.setMockInitialValues({});
     final s = AppState();
     await s.load();
+    expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), isEmpty);
+    expect(s.engine.verbWords, hasLength(121), reason: '🧱 has every verb');
+    await s.setBundleEnabled('daily-grind', true);
+    expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), hasLength(24));
     for (final id in _verbPacks.keys) {
       await s.setBundleEnabled(id, true);
     }
-    expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), isEmpty);
+    expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), hasLength(121));
     expect(
       s.builtInPackIds.toSet().intersection(_verbPacks.keys.toSet()),
       isEmpty,

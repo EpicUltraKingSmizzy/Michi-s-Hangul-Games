@@ -11,10 +11,11 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   /// Home tile number of 🔀 Shuffle.
-  static const shuffleTile = 11;
+  static const shuffleTile = 0;
 
-  /// Game tiles in rows of two, left to right (2 is 🕒 What Time Is It?).
-  static const tileOrder = gameOrder;
+  /// Game tiles in rows of two, left to right (2 is 🕒 What Time Is It?;
+  /// 5 is 🧩 and 🌀 together).
+  static const tileOrder = homeTileOrder;
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -33,6 +34,54 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _open(Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+
+  /// 🧩/🌀 shared tile: its two bubbles, anchored to the tile.
+  final _scrambleBubbles = OverlayPortalController();
+  final _scrambleLink = LayerLink();
+
+  /// The two bubbles over the 🧩 tile; a tap anywhere else closes them.
+  Widget _bubbles(BuildContext context) => Stack(
+    children: [
+      Positioned.fill(
+        child: GestureDetector(
+          key: const ValueKey('bubbles_dismiss'),
+          behavior: HitTestBehavior.opaque,
+          onTap: _scrambleBubbles.hide,
+        ),
+      ),
+      CompositedTransformFollower(
+        link: _scrambleLink,
+        targetAnchor: Alignment.center,
+        followerAnchor: Alignment.center,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.3, end: 1),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.elasticOut,
+          builder: (_, t, child) => Transform.scale(scale: t, child: child),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final g in scrambleTileGames) ...[
+                if (g != scrambleTileGames.first) const SizedBox(height: 10),
+                BouncyButton(
+                  key: ValueKey('bubble_$g'),
+                  color: gameInfos[g - 1].color,
+                  radius: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  onTap: () {
+                    _scrambleBubbles.hide();
+                    _open(GameScreen(game: g));
+                  },
+                  child: Text(gameInfos[g - 1].tileName, style: const TextStyle(fontSize: 21)),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -56,56 +105,55 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   /// Header, 5 rows of uniform game tiles, a shorter full-width 🔀 Shuffle
   /// bar and the bottom buttons share one screen: the tiles take whatever
   /// height is left (all the game tiles the same size). If that
-  /// would make them too squat (big system font), the page gets a fixed,
-  /// taller height and scrolls instead.
+  /// would make them too squat (big system font), the page is laid out
+  /// taller and shrunk to fit, so it never scrolls.
   Widget _body(BuildContext context, BoxConstraints box) {
     final scale = MediaQuery.textScalerOf(context).scale(1);
     // Generous estimates of the header / bottom row, plus a minimum tile.
     final minPage = (134 + 104) * scale + (5 + _barFlex / _rowFlex) * (72 * scale) + 5 * _gap;
-    final height = box.maxHeight >= minPage ? box.maxHeight : minPage;
-    return SingleChildScrollView(
-      child: SizedBox(
-        height: height,
-        child: Column(
-          children: [
-            _header(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    for (var row = 0; row < 5; row++) ...[
-                      if (row > 0) const SizedBox(height: _gap),
-                      Expanded(
-                        flex: _rowFlex,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(child: _gameTile(HomeScreen.tileOrder[row * 2])),
-                            const SizedBox(width: _gap),
-                            Expanded(child: _gameTile(HomeScreen.tileOrder[row * 2 + 1])),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: _gap),
-                    Expanded(
-                      flex: _barFlex,
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: _gameTile(HomeScreen.shuffleTile),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            _bottomButtons(),
-          ],
-        ),
-      ),
+    final fits = box.maxHeight >= minPage;
+    final page = _page();
+    if (fits) return page;
+    return FittedBox(
+      fit: BoxFit.contain,
+      child: SizedBox(width: box.maxWidth * minPage / box.maxHeight, height: minPage, child: page),
     );
   }
+
+  Widget _page() => Column(
+    children: [
+      _header(),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              for (var row = 0; row < 5; row++) ...[
+                if (row > 0) const SizedBox(height: _gap),
+                Expanded(
+                  flex: _rowFlex,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _gameTile(HomeScreen.tileOrder[row * 2])),
+                      const SizedBox(width: _gap),
+                      Expanded(child: _gameTile(HomeScreen.tileOrder[row * 2 + 1])),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: _gap),
+              Expanded(
+                flex: _barFlex,
+                child: SizedBox(width: double.infinity, child: _gameTile(HomeScreen.shuffleTile)),
+              ),
+            ],
+          ),
+        ),
+      ),
+      _bottomButtons(),
+    ],
+  );
 
   Widget _header() => Padding(
     padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
@@ -170,17 +218,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ),
   );
 
-  /// Tiles 1-10 are the games, tile 11 is the 🔀 Shuffle bar.
+  /// Game tiles by game number (🧩's tile also offers 🌀); tile 0 is the
+  /// 🔀 Shuffle bar.
   Widget _gameTile(int game) {
     final shuffle = game == HomeScreen.shuffleTile;
+    final both = game == scrambleTile;
     final info = shuffle ? shuffleInfo : gameInfos[game - 1];
-    final wins = shuffle ? appState.shuffleSessionWins : appState.sessionWins[game] ?? 0;
-    return BouncyButton(
+    final wins = shuffle
+        ? appState.shuffleSessionWins
+        : both
+        ? scrambleTileGames.fold(0, (a, g) => a + (appState.sessionWins[g] ?? 0))
+        : appState.sessionWins[game] ?? 0;
+    final tile = BouncyButton(
       key: ValueKey('tile_$game'),
       color: info.color,
       gradient: info.gradient,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      onTap: () => _open(shuffle ? const GameScreen.shuffle() : GameScreen(game: game)),
+      onTap: both
+          ? _scrambleBubbles.show
+          : () => _open(shuffle ? const GameScreen.shuffle() : GameScreen(game: game)),
       child: Stack(
         children: [
           Positioned.fill(
@@ -200,6 +256,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
         ],
+      ),
+    );
+    if (!both) return tile;
+    return CompositedTransformTarget(
+      link: _scrambleLink,
+      child: OverlayPortal(
+        controller: _scrambleBubbles,
+        overlayChildBuilder: _bubbles,
+        child: tile,
       ),
     );
   }

@@ -124,6 +124,7 @@ class OptionsScreen extends StatelessWidget {
               ),
               const NativeRangeOption(),
               const DigitalTimeOption(),
+              const SentenceLevelOption(),
             ],
           ),
         ),
@@ -216,6 +217,28 @@ class NativeRangeOption extends StatelessWidget {
       labels: [for (final n in GameEngine.nativeMaxStops) '$n'],
       color: gameInfos[7].color,
       onChanged: (i) => appState.setNativeMax(GameEngine.nativeMaxStops[i]),
+    ),
+  );
+}
+
+/// 🧱 Sentence difficulty, shared by Options and the 🧱 pop-up.
+class SentenceLevelOption extends StatelessWidget {
+  const SentenceLevelOption({super.key});
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: appState,
+    builder: (_, _) => _SliderCard(
+      key: const ValueKey('opt_sentence_level'),
+      emoji: gameInfos[GameEngine.sentenceGame - 1].emoji,
+      title: '🧱 Sentence difficulty',
+      blurb: 'How long the sentences are in 🧱 Sentence Builder, and in other games when Verb Packs are on.',
+      value: appState.sentenceLevel,
+      min: sentenceEasy,
+      max: sentenceMaster,
+      labels: sentenceLevelLabels,
+      color: gameInfos[GameEngine.sentenceGame - 1].color,
+      onChanged: appState.setSentenceLevel,
     ),
   );
 }
@@ -322,12 +345,17 @@ class _SliderCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               for (var i = min; i <= max; i++)
-                Text(
-                  labels == null ? '$i' : labels![i - min],
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: i == value ? FontWeight.w900 : FontWeight.w600,
-                    color: i == value ? _ink : const Color(0xFF6B4E8C),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      labels == null ? '$i' : labels![i - min],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: i == value ? FontWeight.w900 : FontWeight.w600,
+                        color: i == value ? _ink : const Color(0xFF6B4E8C),
+                      ),
+                    ),
                   ),
                 ),
             ],

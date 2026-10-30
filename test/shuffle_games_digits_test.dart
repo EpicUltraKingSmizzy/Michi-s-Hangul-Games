@@ -315,16 +315,16 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       var a = AppState();
       await a.load();
-      expect([for (var g = 1; g <= 10; g++) a.shuffleIncludes(g)], everyElement(isTrue));
-      expect(a.shuffleGameCount, 10);
+      expect([for (var g = 1; g <= 11; g++) a.shuffleIncludes(g)], everyElement(isTrue));
+      expect(a.shuffleGameCount, 11);
       expect(await a.setShuffleGame(1, false), isTrue);
       expect(await a.setShuffleGame(9, false), isTrue);
       a = AppState();
       await a.load();
       expect(a.shuffleIncludes(1), isFalse);
       expect(a.shuffleIncludes(9), isFalse);
-      expect(a.shuffleGameCount, 8);
-      for (final g in [2, 3, 4, 5, 6, 7, 10]) {
+      expect(a.shuffleGameCount, 9);
+      for (final g in [2, 3, 4, 5, 6, 7, 10, 11]) {
         expect(await a.setShuffleGame(g, false), isTrue);
       }
       expect(a.shuffleGameCount, 1);
@@ -340,7 +340,7 @@ void main() {
       var a = AppState();
       await a.load();
       expect(a.shuffleIncludes(3), isFalse);
-      expect(a.shuffleGameCount, 9);
+      expect(a.shuffleGameCount, 10);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.containsKey(AppState.kLegacyShuffleGame3), isFalse);
       expect(prefs.getStringList(AppState.kShuffleOff), ['3']);
@@ -351,15 +351,15 @@ void main() {
       SharedPreferences.setMockInitialValues({AppState.kLegacyShuffleGame3: true});
       a = AppState();
       await a.load();
-      expect(a.shuffleGameCount, 10);
+      expect(a.shuffleGameCount, 11);
 
       // A saved list with every game off (should never happen) turns them all on.
       SharedPreferences.setMockInitialValues({
-        AppState.kShuffleOff: [for (var g = 1; g <= 10; g++) '$g'],
+        AppState.kShuffleOff: [for (var g = 1; g <= 11; g++) '$g'],
       });
       a = AppState();
       await a.load();
-      expect(a.shuffleGameCount, 10);
+      expect(a.shuffleGameCount, 11);
     });
 
     test('picker: only switched-on, playable games; no 3️⃣ twice unless alone', () {
@@ -368,7 +368,7 @@ void main() {
       for (var i = 0; i < 1000; i++) {
         seen.add(pickShuffleGame(rand, enabled: (g) => g.isOdd, canPlay: (_) => true)!);
       }
-      expect(seen, {1, 3, 5, 7, 9});
+      expect(seen, {1, 3, 5, 7, 9, 11});
       for (var i = 0; i < 200; i++) {
         expect(
           pickShuffleGame(
@@ -400,7 +400,7 @@ void main() {
       final row = find.byKey(const ValueKey('opt_shuffle_games'));
       await tester.scrollUntilVisible(row, 200);
       expect(find.text('🔀 Shuffle games'), findsOneWidget);
-      expect(find.text('10 of 10 games'), findsOneWidget);
+      expect(find.text('11 of 11 games'), findsOneWidget);
       expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
       await tester.ensureVisible(row);
       await tester.pumpAndSettle();
@@ -415,6 +415,8 @@ void main() {
       final box9 = tester.widget<ThemedBorderBox>(find.byKey(const ValueKey('shuffle_game_9')));
       expect(box9.info.gradient, rainbowGradient);
 
+      await tester.drag(find.byType(ListView), const Offset(0, 3000));
+      await tester.pumpAndSettle();
       final sw1 = find.byKey(const ValueKey('shuffle_switch_1'));
       await tester.scrollUntilVisible(sw1, 200);
       await tester.ensureVisible(sw1);
@@ -422,20 +424,20 @@ void main() {
       await tester.tap(sw1);
       await tester.pumpAndSettle();
       expect(appState.shuffleIncludes(1), isFalse);
-      // Ten games make the list longer than the screen: back to the top.
+      // Eleven games make the list longer than the screen: back to the top.
       await tester.drag(find.byType(ListView), const Offset(0, 3000));
       await tester.pumpAndSettle();
-      expect(find.textContaining('9\u00A0of\u00A010\u00A0games are on'), findsOneWidget);
+      expect(find.textContaining('10\u00A0of\u00A011\u00A0games are on'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pageBack();
       await tester.pumpAndSettle();
-      expect(find.text('9 of 10 games'), findsOneWidget);
+      expect(find.text('10 of 11 games'), findsOneWidget);
       await tearDown(tester);
     });
 
     testWidgets('the last game on cannot be switched off (snackbar)', (tester) async {
       await setUp(tester);
-      for (final g in [1, 2, 3, 4, 5, 6, 7, 8, 10]) {
+      for (final g in [1, 2, 3, 4, 5, 6, 7, 8, 10, 11]) {
         await appState.setShuffleGame(g, false);
       }
       await tester.pumpWidget(const MaterialApp(home: ShuffleGamesScreen()));
@@ -455,7 +457,7 @@ void main() {
 
     testWidgets('🔀 Shuffle plays only the switched-on games', (tester) async {
       await setUp(tester);
-      for (final g in [1, 2, 4, 5, 6, 8, 9, 10]) {
+      for (final g in [1, 2, 4, 5, 6, 8, 9, 10, 11]) {
         await appState.setShuffleGame(g, false);
       }
       await tester.pumpWidget(MaterialApp(home: GameScreen.shuffle(key: UniqueKey())));
@@ -475,7 +477,8 @@ void main() {
       await setUp(tester, dpr: 3);
       await appState.setAllPacks(false);
       await appState.setBundleEnabled(customBundleId, false);
-      for (final g in [2, 7, 8, 9]) {
+      // 🕒 🔢 🖐️ 🎨 and 🧱 need no words.
+      for (final g in [2, 7, 8, 9, 11]) {
         await appState.setShuffleGame(g, false);
       }
       await tester.pumpWidget(MaterialApp(home: GameScreen.shuffle(key: UniqueKey())));

@@ -24,6 +24,7 @@ part 'games/choice_game.dart';
 part 'games/color_game.dart';
 part 'games/link_up_game.dart';
 part 'games/number_game.dart';
+part 'games/sentence_game.dart';
 part 'games/syllable_game.dart';
 part 'games/time_game.dart';
 part 'games/typing_game.dart';
@@ -189,6 +190,8 @@ class _GameScreenState extends State<GameScreen> {
           ? TileSlots(r.charButtons, slotCount(r))
           : r is TimeRound
           ? TileSlots(r.tiles, r.syllables.length)
+          : r is SentenceRound
+          ? TileSlots(r.tiles, r.answer.length)
           : null;
       _period = null;
       _links = r is LinkRound ? LinkBoard(r) : null;
@@ -212,6 +215,7 @@ class _GameScreenState extends State<GameScreen> {
   /// answer is Korean, otherwise the Korean prompt (number games included).
   String _spokenAnswer(Object r, {String? entered}) {
     if (r is ColorRound) return r.answer;
+    if (r is SentenceRound) return r.sentence.korean;
     if (r is TimeRound) return r.spokenFor(entered ?? '');
     // Link Up: the Korean of the last line, which finished the board.
     if (r is LinkRound) return entered ?? '';
@@ -231,6 +235,8 @@ class _GameScreenState extends State<GameScreen> {
   static VocabEntry? _wordOf(Object r) => r is ChoiceRound
       ? r.word
       : r is TypingRound
+      ? r.word
+      : r is SentenceRound
       ? r.word
       : null;
 
@@ -267,6 +273,7 @@ class _GameScreenState extends State<GameScreen> {
     );
     if (mounted && id == _roundId) await _maybeDigitalPrompt();
     if (mounted && id == _roundId) await _maybeNativePrompt();
+    if (mounted && id == _roundId) await _maybeSentencePrompt();
     if (mounted && id == _roundId) _nextRound(newGame: true);
   }
 
@@ -294,6 +301,38 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             key: const ValueKey('native_prompt_done'),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🧱 played directly: the first 5 in a row since the app started offers
+  /// longer sentences, until the difficulty has ever been set to Master.
+  Future<void> _maybeSentencePrompt() async {
+    if (widget.shuffle || _game != GameEngine.sentenceGame) return;
+    if (_streak.count < 5 || appState.sentencePromptShownThisSession) return;
+    if (appState.sentenceMasterReached) return;
+    appState.sentencePromptShownThisSession = true;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        key: const ValueKey('sentence_prompt'),
+        title: const Text('🔥 5 in a row! Ready for longer sentences?'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Raise the difficulty to build longer sentences!'),
+            SizedBox(height: 12),
+            SentenceLevelOption(),
+          ],
+        ),
+        actions: [
+          TextButton(
+            key: const ValueKey('sentence_prompt_done'),
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Done'),
           ),
@@ -602,6 +641,8 @@ class _GameScreenState extends State<GameScreen> {
           ..._timeBody(r)
         else if (r is ChoiceRound)
           ..._choice(r)
+        else if (r is SentenceRound)
+          ..._sentenceBody(r)
         else
           ..._typing(r as TypingRound),
       ],
@@ -770,11 +811,13 @@ class _GameScreenState extends State<GameScreen> {
     ),
   );
 
-  /// The correct letter per slot, for 🕒/🧩/🌀 (null in other rounds).
+  /// The correct letter per slot, for 🕒/🧩/🌀 (a word per slot in 🧱;
+  /// null in other rounds).
   List<String>? get _ghostChars {
     final r = _round;
     if (_slots == null) return null;
     if (r is TimeRound) return r.syllables;
+    if (r is SentenceRound) return r.answer;
     if (r is TypingRound) return r.answer1.split('').where((c) => c.trim().isNotEmpty).toList();
     return null;
   }
@@ -782,6 +825,7 @@ class _GameScreenState extends State<GameScreen> {
   /// What 🔊 reads after a hint: the full answer (🕒 with 오전/오후).
   String get _hintSpeech {
     final r = _round;
+    if (r is SentenceRound) return r.sentence.korean;
     return r is TimeRound ? r.korean : (r as TypingRound).answer1;
   }
 

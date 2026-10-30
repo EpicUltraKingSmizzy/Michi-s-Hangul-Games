@@ -287,7 +287,6 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: HomeScreen()));
       await tester.pump();
       expect(find.text('My Words'), findsNothing);
-      await tester.scrollUntilVisible(find.text('Options'), 200);
       await tester.tap(find.text('Options'));
       await tester.pumpAndSettle();
       expect(find.byType(OptionsScreen), findsOneWidget);
@@ -556,23 +555,24 @@ void main() {
               await tester.pump();
               expect(tester.takeException(), isNull, reason: 'no overflow');
 
-              final scroll = tester.state<ScrollableState>(find.byType(Scrollable).first);
-              if (scale == 1.0) {
-                expect(scroll.position.maxScrollExtent, 0, reason: 'everything on one screen');
-                for (final label in ['Word Packs', 'Options', 'Stats']) {
-                  final r = tester.getRect(find.text(label));
-                  expect(r.bottom, lessThanOrEqualTo(h), reason: '$label visible');
-                }
+              expect(find.byType(Scrollable), findsNothing, reason: 'the home never scrolls');
+              for (final label in ['Word Packs', 'Options', 'Stats']) {
+                final r = tester.getRect(find.text(label));
+                expect(r.bottom, lessThanOrEqualTo(h), reason: '$label visible');
               }
 
-              // Uniform game tiles: same width and height, a 2x5 grid of
-              // the 10 games, then 🔀 Shuffle as a full-width, shorter bar.
+              // Uniform game tiles: same width and height, a 2x5 grid (🧩
+              // and 🌀 share a tile), then 🔀 Shuffle as a full-width,
+              // shorter bar.
+              expect(HomeScreen.tileOrder, [1, 9, 3, 4, 5, 11, 7, 8, 2, 10]);
               final rects = [
-                for (final g in gameOrder) tester.getRect(find.byKey(ValueKey('tile_$g'))),
+                for (final g in HomeScreen.tileOrder)
+                  tester.getRect(find.byKey(ValueKey('tile_$g'))),
               ];
+              expect(find.byKey(const ValueKey('tile_6')), findsNothing);
               expect(find.byKey(const ValueKey('tile_12')), findsNothing);
-              expect(gameOrder, [1, 9, 3, 4, 5, 6, 7, 8, 2, 10]);
-              final bar = tester.getRect(find.byKey(const ValueKey('tile_11')));
+              expect(gameOrder, [1, 9, 3, 4, 5, 6, 11, 7, 8, 2, 10]);
+              final bar = tester.getRect(find.byKey(const ValueKey('tile_0')));
               expect(bar.left, closeTo(rects[0].left, 0.01));
               expect(bar.right, closeTo(rects[1].right, 0.01));
               expect(bar.top, greaterThan(rects[9].bottom));
@@ -585,26 +585,35 @@ void main() {
               for (final r in rects) {
                 expect(r.width, closeTo(rects.first.width, 0.01));
                 expect(r.height, closeTo(rects.first.height, 0.01));
+                expect(r.bottom, lessThanOrEqualTo(h));
               }
               expect(rects.first.height, lessThan(rects.first.width), reason: 'shorter than wide');
 
-              for (var g = 1; g <= 10; g++) {
-                await tester.scrollUntilVisible(
-                  find.byKey(ValueKey('tile_text_$g')),
-                  200,
-                  scrollable: find.byType(Scrollable).first,
-                );
-                expect(tester.takeException(), isNull);
+              for (final g in HomeScreen.tileOrder) {
                 final text = tester.widget<Text>(find.byKey(ValueKey('tile_text_$g')));
                 expect(text.data, gameInfos[g - 1].subtitle);
                 final emoji = tester.widget<Text>(find.byKey(ValueKey('tile_emoji_$g')));
                 expect(emoji.data, gameInfos[g - 1].emoji, reason: 'no keycap number');
               }
+              // The shared tile keeps 🧩's look; its badge counts both games.
+              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_5'))).data, '🧩');
+              expect(
+                find.descendant(
+                  of: find.byKey(const ValueKey('tile_5')),
+                  matching: find.text('🏆 W:${5 * 11 + 6 * 11}'),
+                ),
+                findsOneWidget,
+              );
+              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_11'))).data, '🧱');
               expect(
                 tester.widget<Text>(find.byKey(const ValueKey('tile_text_11'))).data,
+                'Sentence Builder',
+              );
+              expect(
+                tester.widget<Text>(find.byKey(const ValueKey('tile_text_0'))).data,
                 'Shuffle',
               );
-              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_11'))).data, '🔀');
+              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_0'))).data, '🔀');
               expect(
                 tester.widget<Text>(find.byKey(const ValueKey('tile_text_10'))).data,
                 'Link Up',

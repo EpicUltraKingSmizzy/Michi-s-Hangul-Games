@@ -64,11 +64,19 @@ const List<GameInfo> gameInfos = [
   // 9️⃣'s solid colour is only a fallback; its theme is the rainbow gradient.
   GameInfo('9️⃣', 'Color match', '🎨', Color(0xFF1E88E5), gradient: rainbowGradient),
   GameInfo('🔟', 'Link Up', '🔗', Color(0xFFFF9F1C)),
+  GameInfo('1️⃣1️⃣', 'Sentence Builder', '🧱', Color(0xFF9C6644)),
 ];
 
-/// Games in home-screen order (rows of two), also used by 📊 Stats and
-/// 🔀 Shuffle games.
-const List<int> gameOrder = [1, 9, 3, 4, 5, 6, 7, 8, 2, 10];
+/// Games in 📊 Stats and 🔀 Shuffle games order.
+const List<int> gameOrder = [1, 9, 3, 4, 5, 6, 11, 7, 8, 2, 10];
+
+/// Home tiles (rows of two): 🧩 Syllable scramble's tile also opens
+/// 🌀 Scramble + decoys (see [scrambleTile]).
+const List<int> homeTileOrder = [1, 9, 3, 4, 5, 11, 7, 8, 2, 10];
+
+/// The home tile 🧩 and 🌀 share: it keeps 🧩's look and offers both.
+const int scrambleTile = 5;
+const List<int> scrambleTileGames = [5, 6];
 
 /// The last home tile: a random game after every win.
 const GameInfo shuffleInfo = GameInfo('', 'Shuffle', '🔀', Color(0xFF3F51B5));

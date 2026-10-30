@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hangul_hooray/data/app_state.dart';
+import 'package:hangul_hooray/logic/game_engine.dart';
 import 'package:hangul_hooray/main.dart';
 import 'package:hangul_hooray/screens/game_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,7 +58,7 @@ void main() {
   testWidgets('✍️ tip only in Typing practice, never in Shuffle', (tester) async {
     await _setUp(tester);
     await tester.runAsync(() async {
-      for (var g = 1; g <= 10; g++) {
+      for (var g = 1; g <= GameEngine.gameCount; g++) {
         if (g != 3) await appState.setShuffleGame(g, false);
       }
     });

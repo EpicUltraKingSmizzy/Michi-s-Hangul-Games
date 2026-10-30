@@ -49,6 +49,11 @@ class AppState extends ChangeNotifier {
   static const kNativeMax = 'opt_native_max';
   static const kNative99Reached = 'native_99_reached';
 
+  /// 🧱 Sentence difficulty (0 Easy .. 3 Master), and whether it was ever
+  /// set to Master (that stops the 5-in-a-row pop-up for good).
+  static const kSentenceLevel = 'opt_sentence_level';
+  static const kSentenceMasterReached = 'sentence_master_reached';
+
   /// 🔠 Button Font Size: 0 Small, 1 Medium, 2 Large (default), 3 Huge.
   static const kButtonFont = 'opt_button_font';
 
@@ -134,6 +139,14 @@ class AppState extends ChangeNotifier {
   int game7MaxDigits = GameEngine.defaultGame7MaxDigits;
   int nativeMax = GameEngine.defaultNativeMax;
   bool native99Reached = false;
+  int sentenceLevel = sentenceEasy;
+  bool sentenceMasterReached = false;
+
+  /// The 🧱 5-in-a-row pop-up was shown since the app started.
+  bool sentencePromptShownThisSession = false;
+
+  /// 🧱 sentence data (nouns, verbs), linked to the built-in words.
+  SentenceBank? sentenceBank;
 
   /// Stored index: 0 Small, 1 Medium, 2 Large (default), 3 Huge.
   static const defaultButtonFont = 2;
@@ -173,6 +186,13 @@ class AppState extends ChangeNotifier {
     );
     nativeMax = _snapNative(_prefs.getInt(kNativeMax) ?? GameEngine.defaultNativeMax);
     native99Reached = (_prefs.getBool(kNative99Reached) ?? false) || nativeMax == 99;
+    sentenceLevel = (_prefs.getInt(kSentenceLevel) ?? sentenceEasy).clamp(
+      sentenceEasy,
+      sentenceMaster,
+    );
+    sentenceMasterReached =
+        (_prefs.getBool(kSentenceMasterReached) ?? false) || sentenceLevel == sentenceMaster;
+    sentencePromptShownThisSession = false;
     game3Repetitions = _clampReps(
       _prefs.getInt(kGame3Repetitions) ?? GameEngine.defaultGame3Repetitions,
     );
@@ -184,6 +204,14 @@ class AppState extends ChangeNotifier {
     _originalBySection
       ..clear()
       ..addEntries(builtIn.map((e) => MapEntry(e.sectionName, e)));
+    final verbIds = packTexts.keys.where(isVerbPackId).toSet();
+    sentenceBank = SentenceBank.parse(
+      await rootBundle.loadString(sentenceNounsAsset),
+      await rootBundle.loadString(sentenceVerbsAsset),
+      polite: {for (final id in verbIds) ...parsePoliteForms(packTexts[id]!)},
+    );
+    final problems = sentenceBank!.link(builtIn, verbIds);
+    if (problems.isNotEmpty) debugPrint('🧱 sentence data: ${problems.join('; ')}');
 
     final packsJson = _prefs.getString(kUserPacks);
     userPacks = packsJson == null
@@ -323,6 +351,9 @@ class AppState extends ChangeNotifier {
       ..game3Repetitions = game3Repetitions
       ..game7MaxDigits = game7MaxDigits
       ..nativeMax = nativeMax
+      ..sentenceBank = sentenceBank
+      ..sentenceLevel = sentenceLevel
+      ..verbWords = _verbWords()
       ..linkPacksOf = ((w) => packsOfWord(w).where(enabledBundles.contains));
   }
 
@@ -396,6 +427,24 @@ class AppState extends ChangeNotifier {
     await _prefs.setInt(kButtonFont, v);
   }
 
+  /// Every Verb Pack word (with the player's edits), by section.
+  Map<String, VocabEntry> _verbWords() => {
+    for (final e in effectiveBuiltIn)
+      if (isVerbPackId(e.packId)) e.sectionName: e,
+  };
+
+  /// 🧱 difficulty; applies from the next round (verbs in the other games
+  /// too). Choosing Master (anywhere) stops the 5-in-a-row pop-up for good.
+  Future<void> setSentenceLevel(int v) async {
+    v = v.clamp(sentenceEasy, sentenceMaster);
+    if (v == sentenceMaster) sentenceMasterReached = true;
+    sentenceLevel = v;
+    engine.sentenceLevel = v;
+    notifyListeners();
+    await _prefs.setInt(kSentenceLevel, v);
+    if (sentenceMasterReached) await _prefs.setBool(kSentenceMasterReached, true);
+  }
+
   /// Applies from the next 7️⃣ number.
   Future<void> setGame7MaxDigits(int v) async {
     v = _clampDigits(v);
@@ -458,9 +507,9 @@ class AppState extends ChangeNotifier {
   /// Whether a word is in play with the current switches.
   bool isWordVisible(VocabEntry e) {
     final pack = e.packId.isEmpty ? customBundleId : e.packId;
-    // Verb Pack words only appear inside sentences; no game makes those
-    // yet, so they are never in play.
-    if (isVerbPackId(pack)) return false;
+    // Verb Pack words are in play as sentences (the games turn each verb
+    // into a sentence); a player's own word in a Verb Pack never is.
+    if (isVerbPackId(pack) && !isBuiltInWord(e)) return false;
     // A built-in word in several packs is in play when any of them is on.
     if (isBuiltInWord(e)) {
       return enabledBundles.contains(pack) || e.alsoPacks.any(enabledBundles.contains);
@@ -487,7 +536,9 @@ class AppState extends ChangeNotifier {
   ];
 
   void _refreshEngine() {
-    engine.vocabList = activeVocab();
+    engine
+      ..vocabList = activeVocab()
+      ..verbWords = _verbWords();
     notifyListeners();
   }
 
