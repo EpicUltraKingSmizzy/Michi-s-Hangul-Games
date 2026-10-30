@@ -183,8 +183,8 @@ void main() {
       await tester.runAsync(appState.load);
       await tester.pumpWidget(const MaterialApp(home: OptionsScreen()));
       await tester.pump();
-      await tester.scrollUntilVisible(find.text('🔀 Shuffle games'), 200);
-      expect(find.text('🔀 Shuffle games'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Shuffle games'), 200);
+      expect(find.text('Shuffle games'), findsOneWidget);
       expect(find.text('3️⃣✍️ in 🔀 Shuffle'), findsNothing);
       expect(tester.takeException(), isNull);
     });

@@ -204,7 +204,7 @@ void main() {
       await tester.scrollUntilVisible(card, 200);
       await tester.ensureVisible(card);
       await tester.pumpAndSettle();
-      expect(find.text('🔢 Number length'), findsOneWidget);
+      expect(find.text('Number length'), findsOneWidget);
       expect(find.text('The most digits a number can have in 🔢 Sino numbers.'), findsOneWidget);
       final value = find.byKey(const ValueKey('opt_game7_max_digits_value'));
       expect(tester.widget<Text>(value).data, '6');
@@ -399,7 +399,7 @@ void main() {
       expect(find.text('3️⃣✍️ in 🔀 Shuffle'), findsNothing);
       final row = find.byKey(const ValueKey('opt_shuffle_games'));
       await tester.scrollUntilVisible(row, 200);
-      expect(find.text('🔀 Shuffle games'), findsOneWidget);
+      expect(find.text('Shuffle games'), findsOneWidget);
       expect(find.text('11 of 11 games'), findsOneWidget);
       expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
       await tester.ensureVisible(row);

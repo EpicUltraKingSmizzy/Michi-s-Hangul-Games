@@ -68,7 +68,7 @@ void main() {
       await tester.scrollUntilVisible(card, 200);
       await tester.ensureVisible(card);
       await tester.pumpAndSettle();
-      expect(find.text('✍️ Typing repetitions'), findsOneWidget);
+      expect(find.text('Typing repetitions'), findsOneWidget);
       final value = find.byKey(const ValueKey('opt_game3_repetitions_value'));
       expect(tester.widget<Text>(value).data, '3');
       final slider = tester.widget<Slider>(

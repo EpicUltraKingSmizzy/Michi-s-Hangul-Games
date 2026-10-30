@@ -592,7 +592,8 @@ void main() {
       await tester.pump();
       final card = find.byKey(const ValueKey('opt_sentence_level'));
       await tester.scrollUntilVisible(card, 200);
-      expect(find.text('🤖 Sentence difficulty'), findsOneWidget);
+      expect(find.text('Sentence difficulty'), findsOneWidget);
+      expect(find.descendant(of: card, matching: find.text('🤖')), findsOneWidget);
       expect(
         find.text(
           'How long the sentences are in 🏗️ Sentence Builder, and in other games when Verb Packs are on.',

@@ -113,7 +113,7 @@ void main() {
     await tester.pumpAndSettle();
     final sino = tester.getRect(find.byKey(const ValueKey('opt_game7_max_digits')));
     expect(tester.getRect(card).top - sino.bottom, inInclusiveRange(0, 30));
-    expect(find.text('🖐️ Number range'), findsOneWidget);
+    expect(find.text('Number range'), findsOneWidget);
     final slider = find.descendant(of: card, matching: find.byType(Slider));
     await tester.drag(slider, const Offset(600, 0));
     await tester.pumpAndSettle();

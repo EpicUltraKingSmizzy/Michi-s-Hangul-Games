@@ -93,7 +93,7 @@ class OptionsScreen extends StatelessWidget {
               _NavCard(
                 key: const ValueKey('opt_shuffle_games'),
                 emoji: shuffleInfo.emoji,
-                title: '🔀 Shuffle games',
+                title: 'Shuffle games',
                 summary: '${appState.shuffleGameCount} of ${GameEngine.gameCount} games',
                 color: shuffleInfo.color,
                 onTap: () =>
@@ -103,7 +103,7 @@ class OptionsScreen extends StatelessWidget {
               _SliderCard(
                 key: const ValueKey('opt_game3_repetitions'),
                 emoji: '🔁',
-                title: '✍️ Typing repetitions',
+                title: 'Typing repetitions',
                 blurb: 'How many times to type each word in ✍️ Typing practice.',
                 value: appState.game3Repetitions,
                 min: GameEngine.minGame3Repetitions,
@@ -114,7 +114,7 @@ class OptionsScreen extends StatelessWidget {
               _SliderCard(
                 key: const ValueKey('opt_game7_max_digits'),
                 emoji: gameInfos[6].emoji,
-                title: '🔢 Number length',
+                title: 'Number length',
                 blurb: 'The most digits a number can have in 🔢 Sino numbers.',
                 value: appState.game7MaxDigits,
                 min: GameEngine.minGame7MaxDigits,
@@ -209,7 +209,7 @@ class NativeRangeOption extends StatelessWidget {
     builder: (_, _) => _SliderCard(
       key: const ValueKey('opt_native_max'),
       emoji: gameInfos[7].emoji,
-      title: '🖐️ Number range',
+      title: 'Number range',
       blurb: 'The biggest number in 🖐️ Native numbers.',
       value: GameEngine.nativeMaxStops.indexOf(appState.nativeMax),
       min: 0,
@@ -230,8 +230,8 @@ class SentenceLevelOption extends StatelessWidget {
     listenable: appState,
     builder: (_, _) => _SliderCard(
       key: const ValueKey('opt_sentence_level'),
-      emoji: gameInfos[GameEngine.sentenceGame - 1].emoji,
-      title: '🤖 Sentence difficulty',
+      emoji: '🤖',
+      title: 'Sentence difficulty',
       blurb: 'How long the sentences are in 🏗️ Sentence Builder, and in other games when Verb Packs are on.',
       value: appState.sentenceLevel,
       min: sentenceEasy,
