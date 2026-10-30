@@ -192,9 +192,10 @@ void main() {
         }),
       });
       expect(s.activeVocab().any((e) => e.english1 == 'Ghost'), isFalse);
+      expect(s.overrides, isEmpty); // dropped, e.g. edits of the removed 🏃 Action Heroes
       expect(
         s.activeVocab().length,
-        544,
+        463,
       ); // the same as a fresh install: 🗣️ and the other default-off packs off
     });
   });

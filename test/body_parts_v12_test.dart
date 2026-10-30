@@ -78,7 +78,7 @@ void main() {
       final live = s.activeVocab().map((e) => e.korean1).toSet();
       expect(live, containsAll(_moved.values));
       expect(live.intersection(_heartAndBody.difference({'사랑', '웃음', '힘'})), isEmpty);
-      expect(s.activeVocab().length, 544);
+      expect(s.activeVocab().length, 463); // −81 Action Heroes (removed)
     });
 
     test('a player with only Heart & Body on no longer gets body parts', () async {

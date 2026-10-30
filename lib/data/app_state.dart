@@ -210,6 +210,9 @@ class AppState extends ChangeNotifier {
       (jsonDecode(overridesJson) as Map<String, dynamic>).forEach((section, j) {
         final e = VocabEntry.fromJson(j as Map<String, dynamic>);
         final original = _originalBySection[section];
+        // Edits of words no longer shipped (e.g. the removed 🏃 Action
+        // Heroes pack) are dropped.
+        if (original == null) return;
         overrides[section] = e.copyWith(
           sectionName: section,
           // Extra packs come from the bundled list, never from the save.

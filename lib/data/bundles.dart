@@ -32,9 +32,6 @@ Set<String> get defaultOffBundles => {
 
 const String emotionsBundleId = 'emotions';
 
-/// 🏃 Action Heroes: I / he / she + a verb (old I_do, He_does, She_does).
-const String actionHeroesBundleId = 'verbs';
-
 const String customBundleId = 'custom';
 
 /// v13: the family names are the player's own words, not a built-in pack's.

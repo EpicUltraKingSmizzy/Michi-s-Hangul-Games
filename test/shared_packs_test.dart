@@ -150,7 +150,8 @@ void main() {
       });
       final s = AppState();
       await s.load();
-      expect(s.enabledBundles, {..._oldIds}..remove('colours'));
+      // 'verbs' (🏃 Action Heroes, removed) is dropped from old saves.
+      expect(s.enabledBundles, {..._oldIds}..removeAll(['colours', 'verbs']));
       // And they stay off after a restart.
       final again = AppState();
       await again.load();

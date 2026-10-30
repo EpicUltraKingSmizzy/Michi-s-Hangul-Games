@@ -45,7 +45,7 @@ void main() {
   test("parses the user's bundled vocab file", () {
     final entries = diskVocab();
     // + 412 top-500 nouns (v9) − 3 family names, now seeded My Words (v13)
-    expect(entries.length, 566 + 412 - 3 + 24); // v15: +24 🗨️ Everyday Talk
+    expect(entries.length, 566 + 412 - 3 + 24 - 81); // −81 🏃 Action Heroes removed; v15: +24 🗨️ Everyday Talk
     expect(entries.first.packId, builtInBundles.first.id);
     final spider = entries.singleWhere((e) => e.sectionName == 'Entry_00000');
     expect([spider.packId, spider.english1, spider.korean1], ['animals', 'Spider', '거미']);
@@ -58,7 +58,7 @@ void main() {
     for (final e in entries) {
       counts.update(e.packId, (v) => v + 1, ifAbsent: () => 1);
     }
-    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24);
+    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81); // −81: 🏃 Action Heroes removed
     expect(counts, {
       'everyday-talk': 24,
       'phrases': 24,
@@ -70,7 +70,6 @@ void main() {
       'animals': 24,
       'body': 29,
       'emotions': 11,
-      'verbs': 81,
       'numbers': 50,
       'native': 20,
       'colours': 13,
@@ -138,7 +137,6 @@ void main() {
     expect(byEn('It is here.').korean1, '여기예요');
     expect(byEn('October').korean1, '시월');
     expect(byEn('Burrito').korean1, '부리토');
-    expect(byEn('He Needs').korean1, '그는 필요로 합니다');
     // The family names are no longer built in (v13): they are seeded My
     // Words, spelled the family's way.
     for (final name in ['Michi', 'Michel-André', 'Nicole']) {
@@ -180,10 +178,8 @@ void main() {
     final native = entries.where((e) => e.packId == 'native').toList();
     expect(native.map((e) => e.english1), [for (var i = 1; i <= 20; i++) '$i']);
     expect((native[0].korean1, native[0].korean2, native[19].korean2), ('하나', '한', '스무'));
-    expect((byEn('I Go').korean1, byEn('I Go').korean2), ('저는 갑니다', '저는 가요'));
-    expect(byEn('She Writes').korean2, '그녀는 써요');
     expect(byEn('Goodbye (you are leaving)').korean2, '안녕히 계십시오');
-    final sentences = entries.where((e) => e.isFullPhrase || e.packId == 'verbs');
+    final sentences = entries.where((e) => e.isFullPhrase);
     expect(sentences.where((e) => e.korean2.isEmpty).map((e) => e.english1), ['You don’t know?']);
     expect((byEn('Appointment').korean1, byEn('Appointment').emoji), ('약속', ''));
     // Round 5 regrouping and additions.

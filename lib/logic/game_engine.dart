@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:math';
 
-import '../data/bundles.dart' show actionHeroesBundleId, customBundleId;
+import '../data/bundles.dart' show customBundleId;
 import '../models/vocab_entry.dart';
 import 'color_game.dart';
 import 'link_game.dart';
@@ -311,41 +311,13 @@ class GameEngine {
         ko(a).intersection(ko(b)).isNotEmpty;
   }
 
-  /// Korean subject pronouns that start a 🏃 Action Heroes card.
-  static const actionHeroPronouns = ['저는', '그는', '그녀는'];
-
-  /// The pronoun a 🏃 Action Heroes card starts with (저는 / 그는 / 그녀는),
-  /// read from what the card shows so edited cards still group correctly;
-  /// null for any other card.
-  static String? actionHeroSubject(VocabEntry e) {
-    if (!e.inPack(actionHeroesBundleId)) return null;
-    final first = e.korean1.trim().split(RegExp(r'\s+')).first;
-    return actionHeroPronouns.contains(first) ? first : null;
-  }
-
   /// GetWrongAnswers: decoys come first from the same Word Pack with the same
   /// IsFullPhrase, then the same IsFullPhrase from the other packs in play,
   /// then anything in play. Decoys never clash with the
   /// target or with each other (see [entriesClash]); only if the vocabulary is
   /// too small to avoid it are clashing entries used as a last resort.
-  ///
-  /// 🏃 Action Heroes targets get decoys with the same pronoun (저는 / 그는 /
-  /// 그녀는), so only the verb tells them apart. Short of those, the round is
-  /// topped up with other Action Heroes cards, then the usual tiers.
   List<VocabEntry> getWrongAnswers(VocabEntry target, List<VocabEntry> list, {int count = 2}) {
     final others = list.where((x) => x.sectionName != target.sectionName).toList();
-    final subject = actionHeroSubject(target);
-    if (subject != null) {
-      bool hero(VocabEntry x) => x.inPack(actionHeroesBundleId);
-      final ordered = [
-        ..._shuffled(others.where((x) => hero(x) && actionHeroSubject(x) == subject)),
-        ..._shuffled(others.where((x) => hero(x) && actionHeroSubject(x) != subject)),
-        ..._shuffled(others.where((x) => !hero(x) && x.isFullPhrase == target.isFullPhrase)),
-        ..._shuffled(others.where((x) => !hero(x) && x.isFullPhrase != target.isFullPhrase)),
-      ];
-      final wrong = _pickDecoys(target, ordered, count);
-      if (wrong.length == count) return wrong;
-    }
     final tiers = <bool Function(VocabEntry)>[
       (x) =>
           x.isFullPhrase == target.isFullPhrase &&
