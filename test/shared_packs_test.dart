@@ -115,7 +115,7 @@ void main() {
     test('no new word reuses an emoji (exact or without U+FE0F)', () {
       String norm(String s) => s.replaceAll('\uFE0F', '');
       final newOnes = _all.where((e) => _newPacks.contains(e.packId) && e.emoji.isNotEmpty);
-      expect(newOnes, hasLength(37)); // 36 noun emojis; v11 +7 / −5 by pack moves; − Name emoji
+      expect(newOnes, hasLength(36)); // 36 noun emojis; v11 +7 / −5 by pack moves; − Name emoji; − Construction emoji
       final counts = <String, int>{};
       for (final e in _all.where((e) => e.emoji.isNotEmpty)) {
         counts.update(norm(e.emoji), (v) => v + 1, ifAbsent: () => 1);

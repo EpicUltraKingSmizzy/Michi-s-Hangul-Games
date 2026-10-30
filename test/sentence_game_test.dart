@@ -41,6 +41,7 @@ void main() {
       expect(info.tileName, '🏗️ Sentence Builder');
       final others = [...gameInfos.where((g) => g != info).map((g) => g.color), shuffleInfo.color];
       expect(others, isNot(contains(info.color)));
+      expect(all.where((e) => e.emoji == '🏗️'), isEmpty, reason: 'no word uses the game emoji');
     });
 
     test('rounds: verb pre-placed, answer + decoys in the tiles', () {
