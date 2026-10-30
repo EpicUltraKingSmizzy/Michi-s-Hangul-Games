@@ -190,8 +190,7 @@ class GameEngine {
   /// 🏗️ difficulty (Easy..Master), also for verbs in the other games.
   int sentenceLevel = sentenceEasy;
 
-  /// Every Verb Pack word by section (switched on or not), so 🏗️ can use
-  /// all verbs when no Verb Pack is on.
+  /// Every Verb Pack word by section (switched on or not).
   Map<String, VocabEntry> verbWords = {};
 
   /// The verb behind a Verb Pack word in play; null for every other word.
@@ -265,11 +264,7 @@ class GameEngine {
 
   /// Up to [count] sentences of other verbs (in play first, then any), for
   /// decoys next to sentence [target]. Never single words.
-  List<VocabEntry> otherSentences(
-    VocabEntry target,
-    int count, {
-    bool Function(Sentence)? fits,
-  }) {
+  List<VocabEntry> otherSentences(VocabEntry target, int count, {bool Function(Sentence)? fits}) {
     final own = verbOf(target);
     final inPlay = _shuffled(playList.where((e) => verbOf(e) != null && verbOf(e) != own));
     final rest = _shuffled(
@@ -281,7 +276,9 @@ class GameEngine {
       final s = makeSentence(verbOf(w)!, fits: fits);
       if (s == null) continue;
       final e = sentenceEntry(s, w);
-      if (out.any((o) => entriesClash(o, e, useEmoji: useEmoji, showBracketNotes: showBracketNotes))) {
+      if (out.any(
+        (o) => entriesClash(o, e, useEmoji: useEmoji, showBracketNotes: showBracketNotes),
+      )) {
         continue;
       }
       out.add(e);
@@ -289,19 +286,21 @@ class GameEngine {
     return out.sublist(1);
   }
 
-  /// 🏗️: a sentence for a verb of the Verb Packs that are on (every verb
-  /// when none is on), not one of the last few, at [sentenceLevel]; nouns
-  /// from the Word Packs that are on when the verb can use them.
+  /// The verbs of the Verb Packs that are on, usable at [sentenceLevel].
+  List<VocabEntry> get _sentenceVerbs => [
+    for (final e in vocabList)
+      if (verbOf(e) case final v? when SentenceMaker.canMake(v, sentenceLevel)) e,
+  ];
+
+  /// 🏗️ needs at least one Verb Pack on (with a verb usable at
+  /// [sentenceLevel]).
+  bool get hasSentenceVerbs => _bank != null && _sentenceVerbs.isNotEmpty;
+
+  /// 🏗️: a sentence for a verb of the Verb Packs that are on, not one of
+  /// the last few, at [sentenceLevel]; nouns from the Word Packs that are
+  /// on when the verb can use them.
   SentenceRound sentenceRound() {
-    final on = [
-      for (final e in vocabList)
-        if (verbOf(e) case final v? when SentenceMaker.canMake(v, sentenceLevel)) e,
-    ];
-    final all = [
-      for (final e in verbWords.values)
-        if (verbOf(e) case final v? when SentenceMaker.canMake(v, sentenceLevel)) e,
-    ];
-    final pool = on.isNotEmpty ? on : all;
+    final pool = _sentenceVerbs;
     final history = gameHistory[sentenceGame]!;
     var valid = pool.where((e) => !history.contains(e.sectionName)).toList();
     if (valid.isEmpty) {
@@ -347,7 +346,7 @@ class GameEngine {
   /// false = Korean → pick the meaning). Null picks at random each round.
   static bool? pickKoreanFormat;
   bool canPlay(int game) {
-    if (game == sentenceGame) return _bank != null && verbWords.isNotEmpty;
+    if (game == sentenceGame) return hasSentenceVerbs;
     if (!usesVocab(game)) return true;
     if (game == linkUpGame) return canLinkUp;
     return hasEnoughEntries;
@@ -363,7 +362,9 @@ class GameEngine {
         // Pick the Korean) emoji/English → pick the Korean, at random.
         final t = _playedTarget();
         // A sentence's wrong answers are other sentences, never words.
-        final wrong = _sentenceOf[t] != null ? otherSentences(t, 2) : getWrongAnswers(t, _wordsOnly);
+        final wrong = _sentenceOf[t] != null
+            ? otherSentences(t, 2)
+            : getWrongAnswers(t, _wordsOnly);
         return matchingGame(t, wrong, pickKoreanFormat ?? rand.nextBool());
       case timeGame:
         return newTimeRound(rand, recent: gameHistory[timeGame]);
@@ -478,7 +479,9 @@ class GameEngine {
       return played;
     }
     final words = valid.where((x) => verbOf(x) == null).toList();
-    final target = (words.isEmpty ? play : words)[rand.nextInt((words.isEmpty ? play : words).length)];
+    final target = (words.isEmpty
+        ? play
+        : words)[rand.nextInt((words.isEmpty ? play : words).length)];
     logGameTarget(target.sectionName);
     return target;
   }
@@ -659,7 +662,8 @@ class GameEngine {
     // Verbs become short sentences that fit a card.
     words = [for (final w in words) _asPlayed(w, fits: linkSentence) ?? w];
     final pairs = [
-      for (final w in words) LinkPair(
+      for (final w in words)
+        LinkPair(
           word: w,
           korean: _pickKorean(w),
           english: _englishSide(w),

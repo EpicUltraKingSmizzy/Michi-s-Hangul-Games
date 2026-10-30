@@ -27,7 +27,10 @@ final _words = [
 /// is blown up by a FittedBox (rendered height ≤ fontSize × 1.6).
 void _noUpscaledText(WidgetTester tester, String why) {
   // The ✍️ voice-to-text tip is a paragraph, not button text.
-  final tip = find.descendant(of: find.byKey(const ValueKey('typing_tip')), matching: find.byType(Text));
+  final tip = find.descendant(
+    of: find.byKey(const ValueKey('typing_tip')),
+    matching: find.byType(Text),
+  );
   final tipTexts = tip.evaluate().toSet();
   for (final e in find.byType(Text).evaluate().where((e) => !tipTexts.contains(e))) {
     final t = e.widget as Text;
@@ -55,9 +58,13 @@ void main() {
         await tester.runAsync(appState.load);
         final verbs = appState.engine.verbWords;
         for (var g = 1; g <= GameEngine.gameCount; g++) {
-          appState.engine = GameEngine(_words, random: Random(g))
-            ..sentenceBank = appState.sentenceBank
-            ..verbWords = verbs;
+          appState.engine =
+              GameEngine([
+                  ..._words,
+                  if (g == GameEngine.sentenceGame) ...verbs.values,
+                ], random: Random(g))
+                ..sentenceBank = appState.sentenceBank
+                ..verbWords = verbs;
           await tester.pumpWidget(
             MaterialApp(
               home: GameScreen(key: UniqueKey(), game: g),

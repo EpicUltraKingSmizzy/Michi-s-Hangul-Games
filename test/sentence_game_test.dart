@@ -6,6 +6,8 @@ import 'package:hangul_hooray/data/app_state.dart';
 import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/data/speaker.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
+import 'package:hangul_hooray/logic/play_helpers.dart';
+import 'package:hangul_hooray/screens/bundles_screen.dart';
 import 'package:hangul_hooray/main.dart';
 import 'package:hangul_hooray/screens/game_screen.dart';
 import 'package:hangul_hooray/screens/home_screen.dart';
@@ -19,6 +21,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final all = diskVocab();
   final bank = diskSentences();
+  String verbPack() => appState.verbPackIds.first;
   final verbWords = {
     for (final e in all)
       if (isVerbPackId(e.packId)) e.sectionName: e,
@@ -62,7 +65,7 @@ void main() {
       }
     });
 
-    test('no Verb Pack on: 🏗️ uses every verb; the other games get none', () {
+    test('no Verb Pack on: no 🏗️, and the other games get no verbs', () {
       final e =
           GameEngine([
               for (final x in all)
@@ -70,12 +73,8 @@ void main() {
             ], random: Random(1))
             ..sentenceBank = bank
             ..verbWords = verbWords;
-      expect(e.canPlay(GameEngine.sentenceGame), isTrue);
-      final packs = {
-        for (var i = 0; i < 400; i++)
-          (e.newRound(GameEngine.sentenceGame) as SentenceRound).word!.packId,
-      };
-      expect(packs, hasLength(5));
+      expect(e.canPlay(GameEngine.sentenceGame), isFalse);
+      expect(e.hasSentenceVerbs, isFalse);
       expect(e.playList.where((x) => isVerbPackId(x.packId)), isEmpty);
       expect(GameEngine([]).canPlay(GameEngine.sentenceGame), isFalse, reason: 'no data');
     });
@@ -195,7 +194,11 @@ void main() {
   });
 
   group('screens', () {
-    Future<void> setUp(WidgetTester tester, {Map<String, Object> prefs = const {}}) async {
+    Future<void> setUp(
+      WidgetTester tester, {
+      Map<String, Object> prefs = const {},
+      bool verbsOn = true,
+    }) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
@@ -205,6 +208,7 @@ void main() {
         ...prefs,
       });
       await tester.runAsync(appState.load);
+      if (verbsOn) await tester.runAsync(() => appState.setBundleEnabled(verbPack(), true));
       Speaker.debugSpoken = [];
     }
 
@@ -220,6 +224,56 @@ void main() {
     }
 
     dynamic state(WidgetTester t) => t.state(find.byType(GameScreen));
+
+    testWidgets('🏗️ with no Verb Pack on: warning, then Open Verb Packs', (tester) async {
+      await setUp(tester, verbsOn: false);
+      for (final id in appState.verbPackIds) {
+        expect(appState.enabledBundles, isNot(contains(id)));
+      }
+      await tester.pumpWidget(MaterialApp(home: GameScreen(key: UniqueKey(), game: 11)));
+      await tester.pump();
+      expect(state(tester).currentRound, isNull);
+      expect(find.byKey(const ValueKey('needs_verbs')), findsOneWidget);
+      expect(find.text('🏗️ Sentence Builder needs verbs'), findsOneWidget);
+      expect(
+        find.text('Turn on at least one Verb Pack to start building sentences.'),
+        findsOneWidget,
+      );
+      expect(find.text('Not enough words to play!'), findsNothing);
+
+      // Back with none on: the warning stays.
+      await tester.tap(find.text('Open Verb Packs'));
+      await settle(tester);
+      expect(find.byType(VerbPacksScreen), findsOneWidget);
+      await tester.pageBack();
+      await settle(tester);
+      expect(find.byKey(const ValueKey('needs_verbs')), findsOneWidget);
+
+      // Back with a pack on: the game starts.
+      await tester.tap(find.text('Open Verb Packs'));
+      await settle(tester);
+      await tester.runAsync(() => appState.setBundleEnabled(verbPack(), true));
+      await tester.pageBack();
+      await settle(tester);
+      expect(find.byKey(const ValueKey('needs_verbs')), findsNothing);
+      expect(state(tester).currentRound, isA<SentenceRound>());
+      expect(tester.takeException(), isNull);
+      await done(tester);
+    });
+
+    test('🔀 Shuffle skips 🏗️ while no Verb Pack is on', () {
+      final e =
+          GameEngine([
+              for (final x in all)
+                if (x.packId == 'food') x,
+            ], random: Random(3))
+            ..sentenceBank = bank
+            ..verbWords = verbWords;
+      final rand = Random(4);
+      for (var i = 0; i < 300; i++) {
+        expect(pickShuffleGame(rand, canPlay: e.canPlay), isNot(GameEngine.sentenceGame));
+      }
+    });
 
     Future<void> place(WidgetTester tester, List<String> order) async {
       final r = state(tester).currentRound as SentenceRound;

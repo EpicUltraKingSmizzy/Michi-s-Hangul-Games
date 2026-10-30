@@ -499,7 +499,13 @@ class _GameScreenState extends State<GameScreen> {
         ),
         body: Stack(
           children: [
-            SafeArea(child: _round == null ? _notEnoughWords() : _roundBody()),
+            SafeArea(
+              child: _round != null
+                  ? _roundBody()
+                  : _needsVerbs
+                  ? _noVerbPacks()
+                  : _notEnoughWords(),
+            ),
             Align(
               alignment: Alignment.topCenter,
               child: ConfettiWidget(
@@ -560,6 +566,57 @@ class _GameScreenState extends State<GameScreen> {
 
   /// 🔀 Shuffle when none of the switched-on games can be played.
   bool get _noShuffleGame => widget.shuffle && _game == 0;
+
+  /// 🏗️ played directly with no Verb Pack on.
+  bool get _needsVerbs => !widget.shuffle && _game == GameEngine.sentenceGame;
+
+  Widget _noVerbPacks() => Center(
+    key: const ValueKey('needs_verbs'),
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🙀', style: TextStyle(fontSize: 80)),
+          const SizedBox(height: 12),
+          Text(
+            '🏗️ Sentence Builder needs verbs',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: _red),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Turn on at least one Verb Pack to start building sentences.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: _ink),
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              BouncyButton(
+                key: const ValueKey('open_verb_packs'),
+                color: const Color(0xFF00B4FF),
+                onTap: () async {
+                  await Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => const VerbPacksScreen()));
+                  if (mounted) _nextRound();
+                },
+                child: const Text('Open Verb Packs', style: TextStyle(fontSize: 18)),
+              ),
+              BouncyButton(
+                color: const Color(0xFFFF5C8A),
+                onTap: () => Navigator.of(context).pop(),
+                child: const Text('↩️', style: TextStyle(fontSize: 26)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _notEnoughWords() => Center(
     key: ValueKey(_noShuffleGame ? 'no_shuffle_game' : 'not_enough_words'),
