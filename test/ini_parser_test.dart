@@ -58,7 +58,10 @@ void main() {
     for (final e in entries) {
       counts.update(e.packId, (v) => v + 1, ifAbsent: () => 1);
     }
-    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81 + 121 + 6); // −81 🏃 Action Heroes, +121 Verb Packs, +4 nouns +2 phrases
+    expect(
+      counts.values.fold(0, (a, b) => a + b),
+      566 + 412 - 3 + 24 - 81 + 121 + 6,
+    ); // −81 🏃 Action Heroes, +121 Verb Packs, +4 nouns +2 phrases
     expect(counts, {
       'everyday-talk': 24,
       'phrases': 26,
@@ -164,10 +167,11 @@ void main() {
     expect(byEn('Clock').emoji, '⏰');
     expect(byEn('Sword').emoji, '🗡️');
     expect(byEn('Burrito').emoji, '🌯');
+    expect(byEn('Document').emoji, isEmpty, reason: '🗎 is not an emoji; it showed blank');
     expect(
       diskVocab().where((e) => e.emoji.isNotEmpty).length,
-      66 + 124 + 2 + 12 + 7 + 27 - 1 + 20 - 7 + 67 + 36 - 1 - 2 - 2 - 1,
-    ); // + Lock, Thought, colours, weekdays, round 5; − Appointment; + round 8; − 7 Handy Phrases emojis; + 67 emoji-only English1 moved to Emoji (v8); + 36 noun emojis (v9); − 💪 Strength (v10); − Time and Minute emojis; − Problem and Name emojis; − Construction emoji (v11)
+      66 + 124 + 2 + 12 + 7 + 27 - 1 + 20 - 7 + 67 + 36 - 1 - 2 - 2 - 1 - 1,
+    ); // + Lock, Thought, colours, weekdays, round 5; − Appointment; + round 8; − 7 Handy Phrases emojis; + 67 emoji-only English1 moved to Emoji (v8); + 36 noun emojis (v9); − 💪 Strength (v10); − Time and Minute emojis; − Problem and Name emojis; − Construction emoji (v11); − Document 🗎 (not an emoji)
     // Round 4.
     expect((byEn('Older Brother').korean1, byEn('Older Brother').korean2), ('형', '오빠'));
     expect((byEn('Older Sister').korean1, byEn('Older Sister').korean2), ('누나', '언니'));
@@ -289,7 +293,10 @@ void main() {
         '[Pack]\nId = demo\nEmoji = 🧪\nName = Demo\nBlurb = Hi = there\nDefaultOn = false\n'
         '[A]\nenglish1 = a\nkorean1 = 가\nAlsoPacks = food, Animals, demo, nope\n';
     final h = parsePackHeader(text)!;
-    expect([h.id, h.emoji, h.name, h.blurb, h.defaultOn], ['demo', '🧪', 'Demo', 'Hi = there', false]);
+    expect(
+      [h.id, h.emoji, h.name, h.blurb, h.defaultOn],
+      ['demo', '🧪', 'Demo', 'Hi = there', false],
+    );
     final saved = builtInBundles;
     addTearDown(() => setBuiltInBundles(saved));
     String read(String id) => id == 'demo' ? text : '[Pack]\nId = $id\nName = $id\n';
