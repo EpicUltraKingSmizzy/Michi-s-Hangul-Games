@@ -119,6 +119,7 @@ extension _LinkUpGame on _GameScreenState {
                   dragTo: _dragTo,
                   wrong: _wrongLine,
                   shake: _shake,
+                  showEnglish: _linkEnglish,
                   onDown: _linkDown,
                   onMove: _linkMove,
                   onUp: _linkUp,
@@ -127,9 +128,17 @@ extension _LinkUpGame on _GameScreenState {
             ),
           ),
           const SizedBox(height: 14),
-          _controlRow(null),
+          _controlRow(null, extra: appState.useEmoji ? _emojiToggle() : null),
         ],
       ),
     );
   }
+
+  /// 😐 emojis showing / 😶‍🌫️ English showing (only with ⚙️ emojis on).
+  Widget _emojiToggle() => BouncyButton(
+    key: const ValueKey('link_emoji_toggle'),
+    color: const Color(0xFF00B4FF),
+    onTap: () => _update(() => _linkEnglish = !_linkEnglish),
+    child: Text(_linkEnglish ? '😶‍🌫️' : '😐', style: const TextStyle(fontSize: 30)),
+  );
 }

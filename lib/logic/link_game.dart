@@ -6,7 +6,15 @@ class LinkPair {
   final VocabEntry word;
   final String korean;
   final String english;
-  const LinkPair({required this.word, required this.korean, required this.english});
+
+  /// The English words behind an emoji [english] (😐 → 😶‍🌫️ reveal); '' = same as [english].
+  final String plainEnglish;
+  const LinkPair({
+    required this.word,
+    required this.korean,
+    required this.english,
+    this.plainEnglish = '',
+  });
 }
 
 /// A 🔟 🔗 Link Up board: [pairs] down the left in this order, their
@@ -24,7 +32,10 @@ class LinkRound {
   const LinkRound({required this.pairs, required this.rightOrder});
 
   String leftText(int i) => pairs[i].korean;
-  String rightText(int slot) => pairs[rightOrder[slot]].english;
+  String rightText(int slot, {bool english = false}) {
+    final p = pairs[rightOrder[slot]];
+    return english && p.plainEnglish.isNotEmpty ? p.plainEnglish : p.english;
+  }
 
   /// True when the Korean on the left in row [left] belongs with the right
   /// slot [right].

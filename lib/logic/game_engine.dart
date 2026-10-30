@@ -470,7 +470,12 @@ class GameEngine {
       logGameTarget(w.sectionName);
     }
     final pairs = [
-      for (final w in words) LinkPair(word: w, korean: _pickKorean(w), english: _englishSide(w)),
+      for (final w in words) LinkPair(
+          word: w,
+          korean: _pickKorean(w),
+          english: _englishSide(w),
+          plainEnglish: shownEnglish(w),
+        ),
     ];
     return LinkRound(pairs: pairs, rightOrder: _shuffled(List.generate(pairs.length, (i) => i)));
   }

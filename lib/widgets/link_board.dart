@@ -108,6 +108,9 @@ class LinkBoardView extends StatelessWidget {
   final (int, int)? wrong;
   final int shake;
 
+  /// 😶‍🌫️: English words on the right instead of emojis.
+  final bool showEnglish;
+
   final void Function(LinkSpot? spot, Offset at) onDown;
   final void Function(Offset at) onMove;
   final void Function(LinkSpot? spot, Offset at) onUp;
@@ -123,6 +126,7 @@ class LinkBoardView extends StatelessWidget {
     required this.dragTo,
     required this.wrong,
     required this.shake,
+    this.showEnglish = false,
     required this.onDown,
     required this.onMove,
     required this.onUp,
@@ -182,7 +186,7 @@ class LinkBoardView extends StatelessWidget {
   );
 
   Widget _card(LinkSpot s) {
-    final text = s.left ? round.leftText(s.row) : round.rightText(s.row);
+    final text = s.left ? round.leftText(s.row) : round.rightText(s.row, english: showEnglish);
     final locked = _lockedColor(s);
     final isWrong = _isWrong(s);
     final picked = !isWrong && locked == null && (s == selected || s == dragFrom);

@@ -66,6 +66,9 @@ class _GameScreenState extends State<GameScreen> {
   /// ✍️ voice-to-text tip: hidden after the first input until the game is reopened.
   bool _typingTipDismissed = false;
 
+  /// 🔗 😶‍🌫️: emojis hidden, English shown; every new board starts at 😐.
+  bool _linkEnglish = false;
+
   Object? _round;
   int _roundId = 0;
   bool _locked = false;
@@ -190,6 +193,7 @@ class _GameScreenState extends State<GameScreen> {
       _period = null;
       _links = r is LinkRound ? LinkBoard(r) : null;
       _linkPick = null;
+      _linkEnglish = false;
       _dragFrom = null;
       _dragTo = null;
       _wrongLine = null;
@@ -834,7 +838,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   /// ➡️ next (no score), ↩️ back to the menu, ? hint (typing rounds only).
-  Widget _controlRow(VoidCallback? onHint) => Row(
+  Widget _controlRow(VoidCallback? onHint, {Widget? extra}) => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       BouncyButton(
@@ -848,6 +852,7 @@ class _GameScreenState extends State<GameScreen> {
         onTap: () => Navigator.of(context).pop(),
         child: const Text('↩️', style: TextStyle(fontSize: 30)),
       ),
+      if (extra != null) ...[const SizedBox(width: 16), extra],
       if (onHint != null) ...[
         const SizedBox(width: 16),
         BouncyButton(
