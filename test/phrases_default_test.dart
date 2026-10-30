@@ -27,7 +27,7 @@ void main() {
       expect(s.enabledBundles, isNot(contains('whos-who')));
       expect(s.enabledBundles, contains('people'));
       expect(s.activeVocab().any((e) => e.packId == 'phrases'), isFalse);
-      expect(s.activeVocab().length, 463); // 568 − 24 Handy Phrases − 81 Action Heroes (removed)
+      expect(s.activeVocab().length, 465); // 568 − 24 Handy Phrases − 81 Action Heroes (removed) + Cooking, Swimming
     });
 
     test('a saved choice is kept either way', () async {

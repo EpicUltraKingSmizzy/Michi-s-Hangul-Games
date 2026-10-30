@@ -76,7 +76,7 @@ void main() {
       expect(s.enabledBundles, contains(customBundleId));
       final inPlay = s.activeVocab().map((e) => e.english1).toSet();
       expect(inPlay, containsAll(_names.map((n) => n.$1)));
-      expect(s.activeVocab(), hasLength(463), reason: 'Family −3, My Words +3, Action Heroes −81');
+      expect(s.activeVocab(), hasLength(465), reason: 'Family −3, My Words +3, Action Heroes −81, +Cooking +Swimming');
       expect(s.wordsInPack(customBundleId).map((e) => e.english1), _names.map((n) => n.$1));
       expect(s.wordsInPack('people').map((e) => e.english1), isNot(contains('Michi')));
       final prefs = await SharedPreferences.getInstance();

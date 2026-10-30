@@ -71,9 +71,9 @@ void main() {
       expect(builtInBundles.where((b) => b.name.contains('Grown-Up')), isEmpty);
     });
 
-    test('410 words in the new packs; shared words stay one entry with extra packs', () {
+    test('412 words in the new packs; shared words stay one entry with extra packs', () {
       // 412 top-500 nouns; v11 moved 12 People words to Who's Who and 10 to Family.
-      expect(_all.where((e) => _newPacks.contains(e.packId)), hasLength(410));
+      expect(_all.where((e) => _newPacks.contains(e.packId)), hasLength(412)); // v16: +Gift, +Story;
       final shared = _all.where((e) => e.alsoPacks.isNotEmpty).toList();
       expect(
         shared,
@@ -93,8 +93,8 @@ void main() {
         'tick-tock': 50,
         'here-there-everywhere': 40,
         'heart-and-body': 32,
-        'stuff-and-nature': 47,
-        'showtime': 40,
+        'stuff-and-nature': 48,
+        'showtime': 41,
         'school-and-hustle': 40,
         'big-words': 70,
         'big-brain-ideas': 60,

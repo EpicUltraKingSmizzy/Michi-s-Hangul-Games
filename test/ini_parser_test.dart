@@ -45,12 +45,12 @@ void main() {
   test("parses the user's bundled vocab file", () {
     final entries = diskVocab();
     // + 412 top-500 nouns (v9) − 3 family names, now seeded My Words (v13)
-    expect(entries.length, 566 + 412 - 3 + 24 - 81 + 121); // −81 🏃 Action Heroes removed, +121 Verb Packs; v15: +24 🗨️ Everyday Talk
+    expect(entries.length, 566 + 412 - 3 + 24 - 81 + 121 + 6); // −81 🏃 Action Heroes removed, +121 Verb Packs, +4 nouns +2 phrases; v15: +24 🗨️ Everyday Talk
     expect(entries.first.packId, builtInBundles.first.id);
     final spider = entries.singleWhere((e) => e.sectionName == 'Entry_00000');
     expect([spider.packId, spider.english1, spider.korean1], ['animals', 'Spider', '거미']);
     expect(entries.every((e) => e.korean1.isNotEmpty && e.english1.isNotEmpty), isTrue);
-    expect(entries.where((e) => e.isFullPhrase).length, 24 + 24);
+    expect(entries.where((e) => e.isFullPhrase).length, 26 + 24);
 
     // Every entry has exactly one home pack (shared words list extra packs
     // in alsoPacks; see shared_packs_test.dart).
@@ -58,13 +58,13 @@ void main() {
     for (final e in entries) {
       counts.update(e.packId, (v) => v + 1, ifAbsent: () => 1);
     }
-    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81 + 121); // −81 🏃 Action Heroes, +121 Verb Packs
+    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81 + 121 + 6); // −81 🏃 Action Heroes, +121 Verb Packs, +4 nouns +2 phrases
     expect(counts, {
       'everyday-talk': 24,
-      'phrases': 24,
-      'food': 78,
+      'phrases': 26,
+      'food': 79,
       'home': 53,
-      'outside': 53,
+      'outside': 54,
       'time': 36,
       'people': 25, // v13: −3 family names, now seeded My Words
       'animals': 24,
@@ -78,8 +78,8 @@ void main() {
       'tick-tock': 37,
       'here-there-everywhere': 34,
       'heart-and-body': 29,
-      'stuff-and-nature': 26,
-      'showtime': 33,
+      'stuff-and-nature': 27,
+      'showtime': 34,
       'school-and-hustle': 36,
       'big-words': 68,
       'big-brain-ideas': 56,
@@ -96,7 +96,7 @@ void main() {
   test('Handy Phrases have no emoji; Emotions holds the feeling words', () {
     final entries = diskVocab();
     final phrases = entries.where((e) => e.packId == 'phrases').toList();
-    expect(phrases, hasLength(24));
+    expect(phrases, hasLength(26));
     expect(phrases.where((e) => e.emoji.isNotEmpty), isEmpty);
     final emoji = RegExp(r'[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]', unicode: true);
     expect(phrases.where((e) => emoji.hasMatch(e.english1)), isEmpty);

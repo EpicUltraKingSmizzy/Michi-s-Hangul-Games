@@ -688,7 +688,7 @@ void main() {
         find.descendant(of: find.byType(AppBar), matching: find.byKey(const ValueKey('all_packs'))),
         findsOneWidget,
       );
-      expect(find.textContaining('463 words in play'), findsOneWidget); // 🗣️ off by default
+      expect(find.textContaining('465 words in play'), findsOneWidget); // 🗣️ off by default
       await tester.tap(find.byKey(const ValueKey('all_packs')));
       await tester.pump();
       expect(appState.allPacksOn, isFalse);

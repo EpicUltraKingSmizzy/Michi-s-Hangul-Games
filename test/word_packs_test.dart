@@ -195,7 +195,7 @@ void main() {
       expect(s.overrides, isEmpty); // dropped, e.g. edits of the removed 🏃 Action Heroes
       expect(
         s.activeVocab().length,
-        463,
+        465,
       ); // the same as a fresh install: 🗣️ and the other default-off packs off
     });
   });
