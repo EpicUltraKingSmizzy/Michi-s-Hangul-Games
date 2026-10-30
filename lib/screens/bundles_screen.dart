@@ -128,7 +128,7 @@ class VerbPacksScreen extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.all(8),
                 child: Text(
-                  'Verbs will appear in sentences in a game coming soon.',
+                  'Verbs will appear in sentences in games.',
                   key: ValueKey('verb_packs_note'),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
