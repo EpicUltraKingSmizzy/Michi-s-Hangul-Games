@@ -62,6 +62,12 @@ class StatsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 _section('All-time wins by game', _gameGrid(byGame)),
+                if (appState.showStreak)
+                  _section(
+                    'Highest Streak',
+                    _gameGrid(appState.bestStreaks, shuffle: true),
+                    key: const ValueKey('highest_streak'),
+                  ),
                 _section('Wins per day (last 14 days)', _DayChart(appState.winsByDay)),
                 _section(
                   'Daily breakdown',
@@ -109,7 +115,8 @@ class StatsScreen extends StatelessWidget {
     ),
   );
 
-  Widget _section(String title, Widget child) => Card(
+  Widget _section(String title, Widget child, {Key? key}) => Card(
+    key: key,
     margin: const EdgeInsets.symmetric(vertical: 8),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
     child: Padding(
@@ -128,40 +135,41 @@ class StatsScreen extends StatelessWidget {
     ),
   );
 
-  Widget _gameGrid(Map<int, int> byGame) => Wrap(
+  /// One box per game in home order ([shuffle]: then 🔀 Shuffle, key 0).
+  Widget _gameGrid(Map<int, int> byGame, {bool shuffle = false}) => Wrap(
     spacing: 8,
     runSpacing: 8,
     children: [
-      for (final g in gameOrder)
-        ThemedBorderBox(
-          info: gameInfos[g - 1],
-          width: 2,
-          radius: 16,
-          fillColor: gameInfos[g - 1].gradient == null
-              ? gameInfos[g - 1].color.withValues(alpha: 0.18)
-              : Colors.white,
-          fillGradient: gameInfos[g - 1].gradient == null
-              ? null
-              : LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gameInfos[g - 1].shades(Colors.white, 0.8),
-                ),
-          child: Container(
-            width: 70,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              children: [
-                Text(gameInfos[g - 1].emoji, style: const TextStyle(fontSize: 24)),
-                Text(
-                  '${byGame[g]}',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _ink),
-                ),
-              ],
-            ),
-          ),
-        ),
+      for (final g in gameOrder) _gameBox(gameInfos[g - 1], byGame[g] ?? 0),
+      if (shuffle) _gameBox(shuffleInfo, byGame[0] ?? 0),
     ],
+  );
+
+  Widget _gameBox(GameInfo info, int n) => ThemedBorderBox(
+    info: info,
+    width: 2,
+    radius: 16,
+    fillColor: info.gradient == null ? info.color.withValues(alpha: 0.18) : Colors.white,
+    fillGradient: info.gradient == null
+        ? null
+        : LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: info.shades(Colors.white, 0.8),
+          ),
+    child: Container(
+      width: 70,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        children: [
+          Text(info.emoji, style: const TextStyle(fontSize: 24)),
+          Text(
+            '$n',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: _ink),
+          ),
+        ],
+      ),
+    ),
   );
 
   Widget _dayRow(String day, Map<int, int> games) {

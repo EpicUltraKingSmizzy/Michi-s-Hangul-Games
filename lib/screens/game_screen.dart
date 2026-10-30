@@ -242,6 +242,7 @@ class _GameScreenState extends State<GameScreen> {
     final id = _roundId;
     _won = true;
     _streak.hit();
+    unawaited(appState.recordStreak(widget.shuffle ? 0 : _game, _streak.count));
     if (appState.vibration) Buzz.right();
     _confetti.play();
     setState(() {

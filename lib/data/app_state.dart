@@ -35,6 +35,9 @@ class AppState extends ChangeNotifier {
   static const kPackWins = 'pack_wins_by_day';
   static const kWonWords = 'won_words';
 
+  /// 📊 Highest Streak: game number -> best streak ever (0 = 🔀 Shuffle).
+  static const kBestStreaks = 'best_streaks';
+
   /// Old single 3️⃣-in-Shuffle toggle; read once to migrate into [kShuffleOff].
   static const kLegacyShuffleGame3 = 'opt_shuffle_game3';
 
@@ -99,6 +102,10 @@ class AppState extends ChangeNotifier {
 
   /// Section names of every word that has been the word of a won round.
   Set<String> wonWords = {};
+
+  /// 📊 Highest Streak: best 🔥 streak per game, kept forever. Key 0 is
+  /// 🔀 Shuffle (streaks made in Shuffle only count there).
+  Map<int, int> bestStreaks = {};
 
   late GameEngine engine;
 
@@ -299,6 +306,17 @@ class AppState extends ChangeNotifier {
       packWinsByDay = {};
     }
     wonWords = (_prefs.getStringList(kWonWords) ?? const []).toSet();
+    bestStreaks = {};
+    try {
+      final raw = _prefs.getString(kBestStreaks);
+      if (raw != null) {
+        (jsonDecode(raw) as Map<String, dynamic>).forEach(
+          (g, n) => bestStreaks[int.parse(g)] = (n as num).toInt(),
+        );
+      }
+    } catch (_) {
+      bestStreaks = {};
+    }
     engine = GameEngine(activeVocab())
       ..useEmoji = useEmoji
       ..showBracketNotes = showBracketNotes
@@ -641,6 +659,17 @@ class AppState extends ChangeNotifier {
       await _prefs.setString(kPackWins, jsonEncode(packWinsByDay));
       await _prefs.setStringList(kWonWords, wonWords.toList()..sort());
     }
+  }
+
+  /// A streak of [count] in [game] (0 = 🔀 Shuffle): saved if it's a new best.
+  Future<void> recordStreak(int game, int count) async {
+    if (count <= (bestStreaks[game] ?? 0)) return;
+    bestStreaks[game] = count;
+    notifyListeners();
+    await _prefs.setString(
+      kBestStreaks,
+      jsonEncode(bestStreaks.map((g, n) => MapEntry(g.toString(), n))),
+    );
   }
 
   Future<void> _saveWins() => _prefs.setString(
