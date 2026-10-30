@@ -1,7 +1,8 @@
 part of '../game_screen.dart';
 
 /// 🏗️ Sentence Builder: the English sentence, then its Korean built from
-/// word tiles; the verb is already in place.
+/// word tiles; the verb is already in place (Easy/Medium) or two pieces
+/// to place last (Hard/Master).
 extension _SentenceGame on _GameScreenState {
   /// Tile tapped: it drops into the first empty slot.
   Future<void> _onSentenceTile(SentenceRound r, int tile) async {
@@ -41,10 +42,14 @@ extension _SentenceGame on _GameScreenState {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < open; i++) _sentenceSlot(i, slots),
-              if (s.fixedBeforeNegation.isNotEmpty) _fixedChip(s.fixedBeforeNegation),
-              if (s.negated) _sentenceSlot(slots.length - 1, slots),
-              _fixedChip(s.verbChip, key: const ValueKey('verb_chip')),
+              if (s.verbPlaced)
+                for (var i = 0; i < slots.length; i++) _sentenceSlot(i, slots)
+              else ...[
+                for (var i = 0; i < open; i++) _sentenceSlot(i, slots),
+                if (s.fixedBeforeNegation.isNotEmpty) _fixedChip(s.fixedBeforeNegation),
+                if (s.negated) _sentenceSlot(slots.length - 1, slots),
+                _fixedChip(s.verbChip, key: const ValueKey('verb_chip')),
+              ],
             ],
           ),
         ),

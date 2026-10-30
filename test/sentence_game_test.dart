@@ -7,6 +7,7 @@ import 'package:hangul_hooray/data/bundles.dart';
 import 'package:hangul_hooray/data/speaker.dart';
 import 'package:hangul_hooray/logic/game_engine.dart';
 import 'package:hangul_hooray/logic/play_helpers.dart';
+import 'package:hangul_hooray/logic/sentences.dart';
 import 'package:hangul_hooray/screens/bundles_screen.dart';
 import 'package:hangul_hooray/main.dart';
 import 'package:hangul_hooray/screens/game_screen.dart';
@@ -62,6 +63,124 @@ void main() {
           expect(s.korean.endsWith(s.verbChip), isTrue);
           expect(s.accepts(r.answer), isTrue);
         }
+      }
+    });
+
+    test('verb pieces: stem + tense, then the polite ending', () {
+      expect(splitVerbForm('먹었어요'), ['먹었', '어요']);
+      expect(splitVerbForm('먹어요'), ['먹', '어요']);
+      expect(splitVerbForm('앉아요'), ['앉', '아요']);
+      expect(splitVerbForm('먹을 거예요'), ['먹을 거', '예요']);
+      expect(splitVerbForm('가요'), ['가', '요']);
+      expect(splitVerbForm('마셔요'), ['마셔', '요']);
+      expect(splitVerbForm('공부해요'), ['공부해', '요']);
+      expect(splitVerbForm('공부했어요'), ['공부했', '어요']);
+      expect(splitVerbForm('공부할 거예요'), ['공부할 거', '예요']);
+      for (final v in bank.verbs) {
+        for (final t in Tense.values) {
+          final f = v.conj.form(t);
+          final p = splitVerbForm(f);
+          expect(p.join(), f, reason: f);
+          expect(p.every((x) => x.isNotEmpty), isTrue, reason: f);
+        }
+      }
+    });
+
+    test('Easy/Medium keep the verb pre-placed; Hard/Master place its pieces last', () {
+      for (var level = sentenceEasy; level <= sentenceMaster; level++) {
+        final e = engine(level, 100 + level);
+        for (var i = 0; i < 150; i++) {
+          final s = (e.newRound(GameEngine.sentenceGame) as SentenceRound).sentence;
+          final placed = s.level >= sentenceHard;
+          expect(s.verbPlaced, placed);
+          final a = s.answerTiles;
+          if (placed) {
+            expect(a.sublist(a.length - 2), splitVerbForm(s.verbChip), reason: s.korean);
+            expect(s.accepts(a.sublist(0, a.length - 2)), isFalse);
+            // The two pieces swapped: wrong.
+            final swapped = [...a.sublist(0, a.length - 2), a.last, a[a.length - 2]];
+            expect(s.accepts(swapped), isFalse);
+          } else {
+            expect(a.any(s.verbChip.contains), isFalse, reason: s.korean);
+          }
+          // Built from the pieces, the slot line reads the sentence.
+          final line = [
+            for (final u in s.units) u.join(),
+            if (!placed && s.fixedBeforeNegation.isNotEmpty) s.fixedBeforeNegation,
+            ...s.tailTiles.where((t) => t == '안' || t == s.verb.splitNoun),
+            if (placed) s.verbPieces.join() else s.verbChip,
+          ].join(' ');
+          expect(line.replaceAll(' ', ''), s.korean.replaceAll(' ', ''), reason: s.korean);
+        }
+      }
+    });
+
+    test('Master verb decoys: wrong tense, another verb, wrong ending; never an answer', () {
+      final e = engine(sentenceMaster, 7);
+      var withOther = 0, withEnding = 0;
+      for (var i = 0; i < 400; i++) {
+        final r = e.newRound(GameEngine.sentenceGame) as SentenceRound;
+        final s = r.sentence;
+        if (s.level < sentenceMaster) continue;
+        final stem = s.verbPieces[0];
+        final wrongStems = {
+          for (final t in Tense.values)
+            if (t != s.tense)
+              splitVerbForm(
+                s.verbChip == s.verb.conj.form(s.tense)
+                    ? s.verb.conj.form(t)
+                    : s.verb.conj.form(t).substring(s.verb.splitNoun.length),
+              )[0],
+        };
+        expect(
+          s.decoys.where(wrongStems.contains),
+          hasLength(1),
+          reason: '${s.korean} ${s.decoys}',
+        );
+        final otherStems = {
+          for (final v in bank.verbs)
+            if (v.dict != s.verb.dict) splitVerbForm(v.conj.form(s.tense))[0],
+        };
+        if (s.decoys.any((d) => otherStems.contains(d) && !wrongStems.contains(d))) withOther++;
+        final ending = verbEndingDecoys[s.verbPieces[1]];
+        if (ending != null) {
+          expect(s.decoys, contains(ending));
+          withEnding++;
+        }
+        expect(s.decoys, isNot(contains(stem)));
+        // No decoy is an answer piece, so no accepted order can use one.
+        expect(s.decoys.toSet().intersection(s.answerTiles.toSet()), isEmpty);
+        for (final o in s.acceptedTileOrders) {
+          expect(o.any(s.decoys.contains), isFalse);
+        }
+        // Swapping any decoy into the answer is never accepted.
+        for (final d in s.decoys) {
+          for (var j = 0; j < s.answerTiles.length; j++) {
+            final x = [...s.answerTiles]..[j] = d;
+            expect(s.accepts(x), isFalse, reason: '$x');
+          }
+        }
+        expect(r.tiles.length, s.answerTiles.length + s.decoys.length);
+      }
+      expect(withOther, greaterThan(50));
+      expect(withEnding, greaterThan(50));
+    });
+
+    test('Hard has no verb decoys', () {
+      final e = engine(sentenceHard, 3);
+      for (var i = 0; i < 200; i++) {
+        final s = (e.newRound(GameEngine.sentenceGame) as SentenceRound).sentence;
+        final stems = {
+          for (final v in bank.verbs)
+            for (final t in Tense.values) splitVerbForm(v.conj.form(t))[0],
+        };
+        // Particle decoys such as 가 can look like a stem (가다 → 가 + 요).
+        stems.removeAll(['가', '이', '와', '과', '에', '을', '를', '은', '는', '도']);
+        expect(
+          s.decoys.where((d) => stems.contains(d) || verbEndingDecoys.containsValue(d)),
+          isEmpty,
+          reason: '${s.decoys}',
+        );
       }
     });
 
@@ -382,7 +501,9 @@ void main() {
       expect(tester.takeException(), isNull);
       var r = state(tester).currentRound as SentenceRound;
       expect(find.text(r.sentence.english), findsOneWidget);
-      expect(find.byKey(const ValueKey('verb_chip')), findsOneWidget);
+      // Master: nothing pre-placed; the verb is two pieces in the pool.
+      expect(find.byKey(const ValueKey('verb_chip')), findsNothing);
+      expect(r.answer.sublist(r.answer.length - 2), r.sentence.verbPieces);
       // One line of slots.
       final slots = [
         for (var i = 0; i < r.answer.length; i++) tester.getRect(find.byKey(ValueKey('slot_$i'))),
@@ -409,7 +530,7 @@ void main() {
 
       // Units in another order still win.
       final units = r.sentence.units.reversed.expand((u) => u).toList();
-      await place(tester, [...units, if (r.sentence.negated) '안']);
+      await place(tester, [...units, ...r.sentence.tailTiles]);
       expect(state(tester).streakCount, 1);
       await tester.pump(const Duration(seconds: 5));
       r = state(tester).currentRound as SentenceRound;

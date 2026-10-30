@@ -140,11 +140,7 @@ void main() {
     expect(bank.nouns.every((n) => n.sections.isNotEmpty), isTrue);
     for (final v in bank.verbs) {
       expect(v.frames, isNotEmpty, reason: v.dict);
-      expect(
-        SentenceMaker.framesAt(v, sentenceMaster, null),
-        isNotEmpty,
-        reason: v.dict,
-      );
+      expect(SentenceMaker.framesAt(v, sentenceMaster, null), isNotEmpty, reason: v.dict);
     }
   });
 
@@ -158,8 +154,7 @@ void main() {
       expect(v.conj.future, future, reason: dict);
       final neg = switch (v.negate) {
         NegateMode.none => '',
-        NegateMode.split =>
-          '${v.splitNoun} 안 ${v.conj.present.substring(v.splitNoun.length)}',
+        NegateMode.split => '${v.splitNoun} 안 ${v.conj.present.substring(v.splitNoun.length)}',
         NegateMode.normal => v.conj.negative(Tense.present),
       };
       expect(neg, negative, reason: dict);
@@ -169,8 +164,7 @@ void main() {
   test('particles follow the last sound', () {
     expect(
       [
-        for (final n in ['사과', '책', '지하철', '버스', '친구', '동생'])
-          particleFor('을', n),
+        for (final n in ['사과', '책', '지하철', '버스', '친구', '동생']) particleFor('을', n),
       ],
       ['를', '을', '을', '를', '를', '을'],
     );
@@ -190,9 +184,7 @@ void main() {
     for (final v in bank.verbs) {
       for (final s in m.everySentence(v)) {
         count++;
-        dump.writeln(
-          '${s.korean}\t${s.english}\t${sentenceLevelLabels[s.level]}',
-        );
+        dump.writeln('${s.korean}\t${s.english}\t${sentenceLevelLabels[s.level]}');
         for (var i = 0; i < s.nouns.length; i++) {
           final unit = s.units[s.units.length - s.nouns.length + i];
           expect(unit, [
@@ -215,11 +207,7 @@ void main() {
           }
         }
         expect(s.accepts(s.answerTiles), isTrue, reason: s.korean);
-        expect(
-          s.decoys.toSet().intersection(s.answerTiles.toSet()),
-          isEmpty,
-          reason: s.korean,
-        );
+        expect(s.decoys.toSet().intersection(s.answerTiles.toSet()), isEmpty, reason: s.korean);
         expect(s.english, isNot(contains('{')));
         expect(s.english[0], s.english[0].toUpperCase());
       }
@@ -233,21 +221,12 @@ void main() {
 
   test('random rounds stay within their level', () {
     final m = SentenceMaker(Random(7));
-    for (final level in [
-      sentenceEasy,
-      sentenceMedium,
-      sentenceHard,
-      sentenceMaster,
-    ]) {
+    for (final level in [sentenceEasy, sentenceMedium, sentenceHard, sentenceMaster]) {
       for (var i = 0; i < 3000; i++) {
         final v = bank.verbs[i % bank.verbs.length];
         final s = m.make(v, level);
         if (s == null) {
-          expect(
-            level < sentenceHard && !v.tenses.contains(Tense.present),
-            isTrue,
-            reason: v.dict,
-          );
+          expect(level < sentenceHard && !v.tenses.contains(Tense.present), isTrue, reason: v.dict);
           continue;
         }
         if (level < sentenceMedium) expect(s.subject, isNull);
@@ -259,9 +238,7 @@ void main() {
         }
         if (s.subject != null) expect(s.frame.hasNounSubject, isFalse);
         expect(
-          s.decoys
-              .where((d) => d.startsWith('어제') || d.startsWith('내일'))
-              .isNotEmpty,
+          s.decoys.where((d) => d.startsWith('어제') || d.startsWith('내일')).isNotEmpty,
           level >= sentenceHard,
         );
       }
@@ -276,14 +253,7 @@ void main() {
     expect(m.build(eat, frame, [apple]).english, 'I eat apples');
     expect(
       m
-          .build(
-            eat,
-            frame,
-            [apple],
-            subject: subjectHe,
-            tense: Tense.past,
-            time: timeYesterday,
-          )
+          .build(eat, frame, [apple], subject: subjectHe, tense: Tense.past, time: timeYesterday)
           .english,
       'He ate an apple yesterday',
     );
@@ -310,13 +280,7 @@ void main() {
     );
     final study = verbs['공부하다']!;
     final english = bank.nouns.firstWhere((n) => n.korean == '영어');
-    final split = m.build(
-      study,
-      study.frames.first,
-      [english],
-      negated: true,
-      tense: Tense.past,
-    );
+    final split = m.build(study, study.frames.first, [english], negated: true, tense: Tense.past);
     expect(
       (split.korean, split.verbChip, split.fixedBeforeNegation),
       ('영어를 공부 안 했어요', '했어요', '공부'),
@@ -338,9 +302,37 @@ void main() {
       negated: true,
       level: sentenceMaster,
     );
-    expect(s.answerTiles, ['저는', '식당', '에서', '사과', '를', '안']);
-    expect(s.accepts(['사과', '를', '저는', '식당', '에서', '안']), isTrue);
-    expect(s.accepts(['저는', '식당', '사과', '에서', '를', '안']), isFalse);
-    expect(s.accepts(['저는', '안', '식당', '에서', '사과', '를']), isFalse);
+    // Master: 안, then the verb as stem + ending, all placed last.
+    expect(s.answerTiles, ['저는', '식당', '에서', '사과', '를', '안', '먹', '어요']);
+    expect(s.accepts(['사과', '를', '저는', '식당', '에서', '안', '먹', '어요']), isTrue);
+    expect(s.accepts(['저는', '식당', '사과', '에서', '를', '안', '먹', '어요']), isFalse);
+    expect(s.accepts(['저는', '안', '식당', '에서', '사과', '를', '먹', '어요']), isFalse);
+    expect(s.accepts(['저는', '식당', '에서', '사과', '를', '안', '어요', '먹']), isFalse);
+    expect(s.accepts(['저는', '식당', '에서', '사과', '를', '먹', '어요', '안']), isFalse);
+    // Easy/Medium: the verb stays pre-placed, so only 안 is last.
+    final easy = m.build(
+      eat,
+      combo,
+      s.nouns,
+      subject: subjectMe,
+      negated: true,
+      level: sentenceMedium,
+    );
+    expect(easy.answerTiles, ['저는', '식당', '에서', '사과', '를', '안']);
+    expect(easy.accepts(['사과', '를', '저는', '식당', '에서', '안']), isTrue);
+    expect(easy.accepts(['저는', '안', '식당', '에서', '사과', '를']), isFalse);
+
+    // 하다 split negation at Master: 공부 안 했 + 어요, all four pieces placed.
+    final study = verbs['공부하다']!;
+    final split = m.build(
+      study,
+      study.frames.first,
+      [bank.nouns.firstWhere((n) => n.korean == '영어')],
+      negated: true,
+      tense: Tense.past,
+      level: sentenceMaster,
+    );
+    expect(split.answerTiles, ['영어', '를', '공부', '안', '했', '어요']);
+    expect(split.decoys, isNot(contains('공부했')));
   });
 }

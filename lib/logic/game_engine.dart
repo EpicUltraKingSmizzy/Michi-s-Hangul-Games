@@ -219,7 +219,7 @@ class GameEngine {
   /// A sentence for [verb] at [sentenceLevel] that [fits]; failing that,
   /// at a lower level (so a syllable game gets a short one). Null if none.
   Sentence? makeSentence(SentenceVerb verb, {bool Function(Sentence)? fits}) {
-    final maker = SentenceMaker(rand);
+    final maker = SentenceMaker(rand, verbs: _bank?.verbs ?? const []);
     final preferred = _preferredNouns();
     for (var level = sentenceLevel; level >= sentenceEasy; level--) {
       for (var i = 0; i < 12; i++) {

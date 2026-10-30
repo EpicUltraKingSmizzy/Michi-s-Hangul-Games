@@ -121,6 +121,22 @@ class Conjugation {
   String negative(Tense t) => '안 ${form(t)}';
 }
 
+/// A polite verb form as the two 🏗️ Hard/Master pieces: the stem with its
+/// tense, then the polite ending. 먹었 + 어요, 먹을 거 + 예요, 먹 + 어요 /
+/// 앉 + 아요 when the ending is its own syllable, else 가 + 요 / 공부해 + 요.
+List<String> splitVerbForm(String form) {
+  if (form.endsWith(' 거예요')) return [form.substring(0, form.length - 2), '예요'];
+  for (final e in ['어요', '아요']) {
+    if (form.length > e.length && form.endsWith(e)) {
+      return [form.substring(0, form.length - e.length), e];
+    }
+  }
+  return [form.substring(0, form.length - 1), '요'];
+}
+
+/// Wrong polite endings offered as 🏗️ Master decoys (none for a bare 요).
+const verbEndingDecoys = {'어요': '아요', '아요': '어요', '예요': '이에요'};
+
 // ---------------------------------------------------------------- particles
 
 /// Particle keys used in verbs.ini: 을 (을/를), 이 (이/가), 에, 에서, 와 (와/과),
@@ -399,8 +415,20 @@ class Sentence {
   /// Fixed chip before 안 in a split negation (공부), else ''.
   String get fixedBeforeNegation => _split ? verb.splitNoun : '';
 
-  /// The slot tiles in the usual order (안 last when negated).
-  List<String> get answerTiles => [for (final u in units) ...u, if (negated) '안'];
+  /// Hard and Master: the verb is placed as two pieces, nothing pre-placed.
+  bool get verbPlaced => level >= sentenceHard;
+
+  /// The verb's two pieces (먹었 + 어요; 해 + 요 after 공부 안).
+  List<String> get verbPieces => splitVerbForm(verbChip);
+
+  /// The slot tiles after the movable units, in this order: Easy/Medium
+  /// just 안; Hard/Master (공부) (안) then the verb's pieces.
+  List<String> get tailTiles => verbPlaced
+      ? [if (_split) verb.splitNoun, if (negated) '안', ...verbPieces]
+      : [if (negated) '안'];
+
+  /// The slot tiles in the usual order (안 and the verb last).
+  List<String> get answerTiles => [for (final u in units) ...u, ...tailTiles];
 
   String get korean {
     final parts = [for (final u in units) u.join()];
@@ -435,12 +463,13 @@ class Sentence {
   }
 
   /// The slot tiles of every accepted order: the units in any order, each
-  /// kept together, then 안 when negated (the same orders as [accepts]).
+  /// kept together, then [tailTiles] (the same orders as [accepts]).
   List<List<String>> get acceptedTileOrders {
     final out = <List<String>>[];
+    final tail = tailTiles;
     void go(List<String> done, List<List<String>> left) {
       if (left.isEmpty) {
-        out.add([...done, if (negated) '안']);
+        out.add([...done, ...tail]);
         return;
       }
       for (var i = 0; i < left.length; i++) {
@@ -453,12 +482,13 @@ class Sentence {
   }
 
   /// True when [placed] (slot tiles left to right) is the units in any
-  /// order, each unit kept together, with 안 last when negated.
+  /// order, each unit kept together, then [tailTiles] (안, the verb) last.
   bool accepts(List<String> placed) {
-    var rest = placed;
-    if (negated) {
-      if (rest.isEmpty || rest.last != '안') return false;
-      rest = rest.sublist(0, rest.length - 1);
+    final tail = tailTiles;
+    if (placed.length < tail.length) return false;
+    var rest = placed.sublist(0, placed.length - tail.length);
+    for (var i = 0; i < tail.length; i++) {
+      if (placed[rest.length + i] != tail[i]) return false;
     }
     bool match(int at, List<bool> used) {
       if (at == rest.length) return used.every((u) => u);
@@ -710,7 +740,10 @@ List<SentenceVerb> parseSentenceVerbs(
 /// Builds sentences for a verb at a 🏗️ difficulty level.
 class SentenceMaker {
   final Random rand;
-  SentenceMaker(this.rand);
+
+  /// Every verb, for 🏗️ Master's other-verb decoy.
+  final List<SentenceVerb> verbs;
+  SentenceMaker(this.rand, {this.verbs = const []});
 
   /// Chance of a subject at Medium+, a time word at Hard+, a two-noun frame
   /// and 안 at Master.
@@ -834,7 +867,19 @@ class SentenceMaker {
       negated: negated,
     );
     final decoys = <String>[];
-    final answer = {for (final u in units) ...u, if (negated) '안'};
+    final split = negated && verb.negate == NegateMode.split;
+    String chipOf(SentenceVerb v, Tense t) {
+      final f = v.conj.form(t);
+      return split && v == verb ? f.substring(v.splitNoun.length) : f;
+    }
+
+    final pieces = level >= sentenceHard ? splitVerbForm(chipOf(verb, tense)) : const <String>[];
+    final answer = {
+      for (final u in units) ...u,
+      if (negated) '안',
+      if (split && level >= sentenceHard) verb.splitNoun,
+      ...pieces,
+    };
     void add(String? d) {
       if (d != null && !answer.contains(d) && !decoys.contains(d)) {
         decoys.add(d);
@@ -866,6 +911,19 @@ class SentenceMaker {
     }
     if (level >= sentenceMaster && !negated && verb.negate != NegateMode.none) {
       add('안');
+    }
+    if (level >= sentenceMaster) {
+      // Verb decoys: the same verb's stem in a wrong tense, another verb's
+      // stem in this tense, and a wrong ending. Each differs from every
+      // answer piece, and 🏗️ only takes the exact pieces, so none can be
+      // part of an accepted answer.
+      add(splitVerbForm(chipOf(verb, _pick(Tense.values.where((t) => t != tense).toList())))[0]);
+      final others = [
+        for (final v in verbs)
+          if (v.dict != verb.dict && !answer.contains(splitVerbForm(v.conj.form(tense))[0])) v,
+      ];
+      if (others.isNotEmpty) add(splitVerbForm(_pick(others).conj.form(tense))[0]);
+      add(verbEndingDecoys[pieces[1]]);
     }
     return Sentence._(
       verb: verb,
