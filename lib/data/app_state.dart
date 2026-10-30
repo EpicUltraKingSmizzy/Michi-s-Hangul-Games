@@ -216,8 +216,8 @@ class AppState extends ChangeNotifier {
         overrides[section] = e.copyWith(
           sectionName: section,
           // Extra packs come from the bundled list, never from the save.
-          alsoPacks: original?.alsoPacks ?? const [],
-          packId: validPack(e.packId, original?.packId ?? customBundleId),
+          alsoPacks: original.alsoPacks,
+          packId: validPack(e.packId, original.packId),
         );
       });
     }
