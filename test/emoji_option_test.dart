@@ -68,7 +68,7 @@ void main() {
       expect(byKo['모자']!.emoji, '🎩');
       expect(byKo['생쥐']!.english1, 'Mouse (animal)');
       expect(byKo['아내']!.english1, 'Wife');
-      expect(byKo['아내']!.emoji, '⚭🧍‍♀️');
+      expect(byKo['아내']!.emoji, '💍🧍‍♀️');
     });
   });
 
