@@ -130,6 +130,10 @@ class _EditWordScreenState extends State<EditWordScreen> {
   late bool _phrase = widget.entry?.isFullPhrase ?? false;
   late final bool _builtIn = widget.entry != null && appState.isBuiltInWord(widget.entry!);
 
+  /// Edit Verb: a word in a Verb Pack. No Emoji field, Korean read-only (the
+  /// sentence grammar hangs on it), and only Verb Packs to pick from.
+  late final bool _verb = widget.entry != null && appState.isVerbPack(widget.entry!.packId);
+
   @override
   void dispose() {
     for (final c in [_english1, _english2, _emoji, _korean1, _korean2, _pack]) {
@@ -143,11 +147,13 @@ class _EditWordScreenState extends State<EditWordScreen> {
     String label,
     String hint, {
     bool required = false,
+    bool readOnly = false,
     Widget? suffix,
   }) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 7),
     child: TextFormField(
       controller: c,
+      readOnly: readOnly,
       decoration: InputDecoration(labelText: label, hintText: hint, suffixIcon: suffix),
       style: const TextStyle(fontSize: 18),
       validator: required
@@ -170,7 +176,7 @@ class _EditWordScreenState extends State<EditWordScreen> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    final choice = appState.resolvePack(_pack.text);
+    final choice = appState.resolvePack(_pack.text, verbs: _verb);
     var packEmoji = '';
     if (choice.kind == PackKind.newPack) {
       final picked = await Navigator.of(context).push<String>(
@@ -193,6 +199,7 @@ class _EditWordScreenState extends State<EditWordScreen> {
       ),
       packChoice: choice,
       newPackEmoji: packEmoji,
+      verb: _verb,
     );
     if (mounted) Navigator.of(context).pop();
   }
@@ -239,17 +246,31 @@ class _EditWordScreenState extends State<EditWordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final choice = appState.resolvePack(_pack.text);
+    final choice = appState.resolvePack(_pack.text, verbs: _verb);
     final picks = <({String id, String emoji, String name})>[
-      (id: customBundleId, emoji: myWordsEmoji, name: myWordsName),
-      for (final id in appState.builtInPackIds)
-        (id: id, emoji: appState.packLabel(id).emoji, name: appState.packLabel(id).name),
-      for (final p in appState.userPacks) (id: p.id, emoji: p.emoji, name: p.name),
+      if (_verb) ...[
+        for (final id in appState.verbPackIds)
+          (id: id, emoji: appState.packLabel(id).emoji, name: appState.packLabel(id).name),
+        for (final p in appState.userVerbPacks) (id: p.id, emoji: p.emoji, name: p.name),
+      ] else ...[
+        (id: customBundleId, emoji: myWordsEmoji, name: myWordsName),
+        for (final id in appState.builtInPackIds)
+          (id: id, emoji: appState.packLabel(id).emoji, name: appState.packLabel(id).name),
+        for (final p in appState.userWordPacks) (id: p.id, emoji: p.emoji, name: p.name),
+      ],
     ];
     final edited = _builtIn && appState.isOverridden(widget.entry!);
     return FunBackground(
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.entry == null ? '➕ New Word' : '✏️ Edit Word')),
+        appBar: AppBar(
+          title: Text(
+            widget.entry == null
+                ? '➕ New Word'
+                : _verb
+                ? '✏️ Edit Verb'
+                : '✏️ Edit Word',
+          ),
+        ),
         // Save (and Reset / Delete) stay on screen however long the pack list is.
         bottomNavigationBar: SafeArea(
           child: Padding(
@@ -314,26 +335,35 @@ class _EditWordScreenState extends State<EditWordScreen> {
                 'Korean 1 *',
                 'e.g. 고양이',
                 required: true,
+                readOnly: _verb,
                 suffix: widget.entry == null ? null : _speakKorean1(),
               ),
-              _field(_korean2, 'Korean 2 (another accepted answer)', 'optional'),
+              // Edit Verb: no Korean 2 field (its saved value is kept as is).
+              if (!_verb) _field(_korean2, 'Korean 2 (another accepted answer)', 'optional'),
               _field(_english1, 'English 1 *', 'e.g. Cat', required: true),
               _field(_english2, 'English 2', 'optional'),
-              _field(_emoji, 'Emoji', 'optional, e.g. 🐱 (shown instead of English)'),
+              if (!_verb) _field(_emoji, 'Emoji', 'optional, e.g. 🐱 (shown instead of English)'),
               Padding(
                 padding: const EdgeInsets.only(top: 7),
                 child: TextFormField(
                   key: const ValueKey('pack_field'),
                   controller: _pack,
-                  decoration: const InputDecoration(
-                    labelText: 'Word Pack',
-                    hintText: 'blank = My Words, or name a new pack',
+                  decoration: InputDecoration(
+                    labelText: _verb ? 'Verb Pack' : 'Word Pack',
+                    hintText: _verb
+                        ? 'pick a Verb Pack, or name a new pack'
+                        : 'blank = My Words, or name a new pack',
                   ),
                   style: const TextStyle(fontSize: 18),
+                  validator: _verb
+                      ? (_) => appState.resolvePack(_pack.text, verbs: true).name.isEmpty
+                            ? 'This one is needed! 🙏'
+                            : null
+                      : null,
                 ),
               ),
               // Only a new pack name gets a note (its emoji is picked next).
-              if (choice.kind == PackKind.newPack)
+              if (choice.kind == PackKind.newPack && choice.name.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
                   child: Text(

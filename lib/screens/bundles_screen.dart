@@ -43,7 +43,7 @@ class BundlesScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-              if (appState.verbPackIds.isNotEmpty)
+              if (appState.verbPackIds.isNotEmpty || appState.userVerbPacks.isNotEmpty)
                 Card(
                   key: const ValueKey('verb_packs_button'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -53,15 +53,17 @@ class BundlesScreen extends StatelessWidget {
                       'Verb Packs',
                       style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
                     ),
-                    subtitle: Text('${appState.verbPackIds.length} packs'),
+                    subtitle: Text(
+                      '${appState.verbPackIds.length + appState.userVerbPacks.length} packs',
+                    ),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(
-                      context,
-                    ).push(MaterialPageRoute(builder: (_) => const VerbPacksScreen())),
+                    onTap: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (_) => const VerbPacksScreen())),
                   ),
                 ),
               for (final id in appState.builtInPackIds) _builtInCard(id),
-              for (final p in appState.userPacks)
+              for (final p in appState.userWordPacks)
                 _BundleCard(
                   key: ValueKey('pack_${p.id}'),
                   emoji: p.emoji,
@@ -110,6 +112,17 @@ Widget _builtInCard(String id) {
   );
 }
 
+/// A user pack's card (Word Packs or, for a Verb Pack, the Verb Packs screen).
+Widget _userPackCard(UserPack p) => _BundleCard(
+  key: ValueKey('pack_${p.id}'),
+  emoji: p.emoji,
+  name: p.name,
+  blurb: 'Your own pack.',
+  words: appState.wordsInPack(p.id),
+  enabled: appState.enabledBundles.contains(p.id),
+  onChanged: (v) => appState.setBundleEnabled(p.id, v),
+);
+
 /// The Verb Packs, opened from the Word Packs screen. Same cards as the
 /// main list (switch, expand, tap to hear, long press to edit).
 class VerbPacksScreen extends StatelessWidget {
@@ -134,6 +147,7 @@ class VerbPacksScreen extends StatelessWidget {
                 ),
               ),
               for (final id in appState.verbPackIds) _builtInCard(id),
+              for (final p in appState.userVerbPacks) _userPackCard(p),
             ],
           ),
         ),

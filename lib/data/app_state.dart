@@ -430,7 +430,7 @@ class AppState extends ChangeNotifier {
   /// Every Verb Pack word (with the player's edits), by section.
   Map<String, VocabEntry> _verbWords() => {
     for (final e in effectiveBuiltIn)
-      if (isVerbPackId(e.packId)) e.sectionName: e,
+      if (isVerbPack(e.packId)) e.sectionName: e,
   };
 
   /// 🏗️ difficulty; applies from the next round (verbs in the other games
@@ -509,7 +509,7 @@ class AppState extends ChangeNotifier {
     final pack = e.packId.isEmpty ? customBundleId : e.packId;
     // Verb Pack words are in play as sentences (the games turn each verb
     // into a sentence); a player's own word in a Verb Pack never is.
-    if (isVerbPackId(pack) && !isBuiltInWord(e)) return false;
+    if (isVerbPack(pack) && !isBuiltInWord(e)) return false;
     // A built-in word in several packs is in play when any of them is on.
     if (isBuiltInWord(e)) {
       return enabledBundles.contains(pack) || e.alsoPacks.any(enabledBundles.contains);
@@ -554,11 +554,20 @@ class AppState extends ChangeNotifier {
       .map((b) => b.id)
       .where((id) => wordsInPack(id).isNotEmpty);
 
-  /// Verb Packs, listed on the Verb Packs screen.
+  /// Built-in Verb Packs, listed on the Verb Packs screen.
   Iterable<String> get verbPackIds => builtInBundles
       .where((b) => b.isVerbPack)
       .map((b) => b.id)
       .where((id) => wordsInPack(id).isNotEmpty);
+
+  /// The player's own packs on the Word Packs screen (not Verb Packs).
+  List<UserPack> get userWordPacks => userPacks.where((p) => !p.isVerb).toList();
+
+  /// The player's own Verb Packs (on the Verb Packs screen).
+  List<UserPack> get userVerbPacks => userPacks.where((p) => p.isVerb).toList();
+
+  /// A built-in or user Verb Pack.
+  bool isVerbPack(String id) => isVerbPackId(id) || userPacks.any((p) => p.isVerb && p.id == id);
 
   /// Every pack the "All packs" switch controls: built-in and user packs,
   /// never My Words.
@@ -612,17 +621,18 @@ class AppState extends ChangeNotifier {
     return (emoji: myWordsEmoji, name: myWordsName);
   }
 
-  PackChoice resolvePack(String input) => resolvePackInput(input, userPacks: userPacks);
+  PackChoice resolvePack(String input, {bool verbs = false}) =>
+      resolvePackInput(input, userPacks: verbs ? userPacks : userWordPacks, verbs: verbs);
 
   /// Creates a new user pack (switched on) and returns its id. Not saved
   /// until a word is put in it.
-  String createUserPack(String name, String emoji) {
+  String createUserPack(String name, String emoji, {bool verb = false}) {
     var n = DateTime.now().microsecondsSinceEpoch;
     while (userPacks.any((p) => p.id == '$userPackPrefix$n')) {
       n++;
     }
     final id = '$userPackPrefix$n';
-    userPacks.add(UserPack(id: id, name: name, emoji: emoji.isEmpty ? '📦' : emoji));
+    userPacks.add(UserPack(id: id, name: name, emoji: emoji.isEmpty ? '📦' : emoji, isVerb: verb));
     enabledBundles.add(id);
     return id;
   }
@@ -634,9 +644,10 @@ class AppState extends ChangeNotifier {
     VocabEntry e, {
     required PackChoice packChoice,
     String newPackEmoji = '',
+    bool verb = false,
   }) async {
     final packId = packChoice.kind == PackKind.newPack
-        ? createUserPack(packChoice.name, newPackEmoji)
+        ? createUserPack(packChoice.name, newPackEmoji, verb: verb)
         : packChoice.id;
     var word = e.copyWith(packId: packId);
     final original = originalOf(word);

@@ -6,14 +6,23 @@ class UserPack {
   final String id;
   final String name;
   final String emoji;
-  const UserPack({required this.id, required this.name, required this.emoji});
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'emoji': emoji};
+  /// A Verb Pack (made from the Edit Verb screen): listed with the Verb Packs.
+  final bool isVerb;
+  const UserPack({required this.id, required this.name, required this.emoji, this.isVerb = false});
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'emoji': emoji,
+    if (isVerb) 'verb': true,
+  };
 
   factory UserPack.fromJson(Map<String, dynamic> j) => UserPack(
     id: (j['id'] ?? '') as String,
     name: (j['name'] ?? '') as String,
     emoji: (j['emoji'] ?? '📦') as String,
+    isVerb: j['verb'] == true,
   );
 }
 
@@ -56,9 +65,21 @@ String packKey(String input) => tidyPackName(input).toLowerCase();
 /// Resolves the "Word Pack" field: trimmed, case ignored, a leading emoji
 /// ignored. Blank or "My Words" -> My Words; an existing built-in or user
 /// pack name -> that pack; anything else -> a brand-new pack.
-PackChoice resolvePackInput(String input, {required List<UserPack> userPacks}) {
+/// With [verbs] (the Edit Verb screen) only Verb Packs match, and a blank
+/// field or "My Words" gives a new pack with no name (the screen refuses it).
+PackChoice resolvePackInput(String input, {required List<UserPack> userPacks, bool verbs = false}) {
   final key = packKey(input);
-  if (key.isEmpty || key == packKey(myWordsName)) {
+  if (verbs) {
+    for (final b in builtInBundles) {
+      if (b.isVerbPack && packKey(b.name) == key) return PackChoice(PackKind.builtIn, b.id, b.name);
+    }
+    for (final p in userPacks) {
+      if (p.isVerb && packKey(p.name) == key) return PackChoice(PackKind.user, p.id, p.name);
+    }
+    if (key.isEmpty || key == packKey(myWordsName)) {
+      return const PackChoice(PackKind.newPack, '', '');
+    }
+  } else if (key.isEmpty || key == packKey(myWordsName)) {
     return const PackChoice(PackKind.myWords, customBundleId, myWordsName);
   }
   for (final b in builtInBundles) {
