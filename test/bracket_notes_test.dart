@@ -72,7 +72,7 @@ void main() {
       }
     });
 
-    test('stripping makes 30 new look-alike groups (64 cards)', () {
+    test('stripping makes 31 new look-alike groups (66 cards)', () {
       Map<String, List<VocabEntry>> group(String Function(VocabEntry) f) {
         final m = <String, List<VocabEntry>>{};
         for (final e in _all) {
@@ -86,8 +86,8 @@ void main() {
       final grown = after.entries
           .where((g) => g.value.length > 1 && (before[g.key]?.length ?? 0) != g.value.length)
           .toList();
-      expect(grown, hasLength(30));
-      expect(grown.fold<int>(0, (n, g) => n + g.value.length), 64);
+      expect(grown, hasLength(31));
+      expect(grown.fold<int>(0, (n, g) => n + g.value.length), 66); // + to move / to move (something)
       expect(after['0']!.map((e) => e.korean1).toSet(), {'영', '공'});
       expect(after['rice']!.map((e) => e.korean1).toSet(), {'밥', '쌀'});
       expect(after['car']!.map((e) => e.korean1).toSet(), {'자동차', '차'});
