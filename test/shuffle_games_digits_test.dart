@@ -477,7 +477,7 @@ void main() {
       await setUp(tester, dpr: 3);
       await appState.setAllPacks(false);
       await appState.setBundleEnabled(customBundleId, false);
-      // 🕒 🔢 🖐️ 🎨 and 🧱 need no words.
+      // 🕒 🔢 🖐️ 🎨 and 🏗️ need no words.
       for (final g in [2, 7, 8, 9, 11]) {
         await appState.setShuffleGame(g, false);
       }

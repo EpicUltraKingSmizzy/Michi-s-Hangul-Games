@@ -62,7 +62,7 @@ void main() {
     final s = AppState();
     await s.load();
     expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), isEmpty);
-    expect(s.engine.verbWords, hasLength(121), reason: '🧱 has every verb');
+    expect(s.engine.verbWords, hasLength(121), reason: '🏗️ has every verb');
     await s.setBundleEnabled('daily-grind', true);
     expect(s.activeVocab().where((e) => isVerbPackId(e.packId)), hasLength(24));
     for (final id in _verbPacks.keys) {

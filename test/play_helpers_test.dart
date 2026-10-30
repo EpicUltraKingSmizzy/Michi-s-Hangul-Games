@@ -604,7 +604,7 @@ void main() {
                 ),
                 findsOneWidget,
               );
-              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_11'))).data, '🧱');
+              expect(tester.widget<Text>(find.byKey(const ValueKey('tile_emoji_11'))).data, '🏗️');
               expect(
                 tester.widget<Text>(find.byKey(const ValueKey('tile_text_11'))).data,
                 'Sentence Builder',

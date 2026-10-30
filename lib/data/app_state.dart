@@ -49,7 +49,7 @@ class AppState extends ChangeNotifier {
   static const kNativeMax = 'opt_native_max';
   static const kNative99Reached = 'native_99_reached';
 
-  /// 🧱 Sentence difficulty (0 Easy .. 3 Master), and whether it was ever
+  /// 🏗️ Sentence difficulty (0 Easy .. 3 Master), and whether it was ever
   /// set to Master (that stops the 5-in-a-row pop-up for good).
   static const kSentenceLevel = 'opt_sentence_level';
   static const kSentenceMasterReached = 'sentence_master_reached';
@@ -142,10 +142,10 @@ class AppState extends ChangeNotifier {
   int sentenceLevel = sentenceEasy;
   bool sentenceMasterReached = false;
 
-  /// The 🧱 5-in-a-row pop-up was shown since the app started.
+  /// The 🏗️ 5-in-a-row pop-up was shown since the app started.
   bool sentencePromptShownThisSession = false;
 
-  /// 🧱 sentence data (nouns, verbs), linked to the built-in words.
+  /// 🏗️ sentence data (nouns, verbs), linked to the built-in words.
   SentenceBank? sentenceBank;
 
   /// Stored index: 0 Small, 1 Medium, 2 Large (default), 3 Huge.
@@ -211,7 +211,7 @@ class AppState extends ChangeNotifier {
       polite: {for (final id in verbIds) ...parsePoliteForms(packTexts[id]!)},
     );
     final problems = sentenceBank!.link(builtIn, verbIds);
-    if (problems.isNotEmpty) debugPrint('🧱 sentence data: ${problems.join('; ')}');
+    if (problems.isNotEmpty) debugPrint('🏗️ sentence data: ${problems.join('; ')}');
 
     final packsJson = _prefs.getString(kUserPacks);
     userPacks = packsJson == null
@@ -433,7 +433,7 @@ class AppState extends ChangeNotifier {
       if (isVerbPackId(e.packId)) e.sectionName: e,
   };
 
-  /// 🧱 difficulty; applies from the next round (verbs in the other games
+  /// 🏗️ difficulty; applies from the next round (verbs in the other games
   /// too). Choosing Master (anywhere) stops the 5-in-a-row pop-up for good.
   Future<void> setSentenceLevel(int v) async {
     v = v.clamp(sentenceEasy, sentenceMaster);

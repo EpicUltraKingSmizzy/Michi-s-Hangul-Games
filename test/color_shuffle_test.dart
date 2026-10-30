@@ -251,7 +251,7 @@ void main() {
     });
 
     testWidgets('🔀 Shuffle: streak and wins carry across games, stats per game', (tester) async {
-      await setUpApp(tester, packsOff: true); // only word-free games and 🧱 playable
+      await setUpApp(tester, packsOff: true); // only word-free games and 🏗️ playable
       final before9 = appState.sessionWins[9]!;
       final beforeShuffle = appState.shuffleSessionWins;
       await tester.pumpWidget(MaterialApp(home: GameScreen.shuffle(key: UniqueKey())));

@@ -221,7 +221,7 @@ class NativeRangeOption extends StatelessWidget {
   );
 }
 
-/// 🧱 Sentence difficulty, shared by Options and the 🧱 pop-up.
+/// 🤖 Sentence difficulty, shared by Options and the 🏗️ pop-up.
 class SentenceLevelOption extends StatelessWidget {
   const SentenceLevelOption({super.key});
 
@@ -231,8 +231,8 @@ class SentenceLevelOption extends StatelessWidget {
     builder: (_, _) => _SliderCard(
       key: const ValueKey('opt_sentence_level'),
       emoji: gameInfos[GameEngine.sentenceGame - 1].emoji,
-      title: '🧱 Sentence difficulty',
-      blurb: 'How long the sentences are in 🧱 Sentence Builder, and in other games when Verb Packs are on.',
+      title: '🤖 Sentence difficulty',
+      blurb: 'How long the sentences are in 🏗️ Sentence Builder, and in other games when Verb Packs are on.',
       value: appState.sentenceLevel,
       min: sentenceEasy,
       max: sentenceMaster,

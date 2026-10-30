@@ -85,7 +85,7 @@ class TypingRound {
   });
 }
 
-/// A 🧱 Sentence Builder round: the English to build, the slot tiles in
+/// A 🏗️ Sentence Builder round: the English to build, the slot tiles in
 /// the usual order (the verb is pre-placed) and the tile pile with decoys.
 class SentenceRound {
   final Sentence sentence;
@@ -127,7 +127,7 @@ class GameEngine {
   static const int newGameDelayMs = 300;
   static const int gameCount = 11;
 
-  /// 🧱 Sentence Builder: build a Korean sentence from word tiles.
+  /// 🏗️ Sentence Builder: build a Korean sentence from word tiles.
   static const int sentenceGame = 11;
 
   /// Sentences in 🔟 🔗 Link Up and the syllable games stay this short.
@@ -175,9 +175,9 @@ class GameEngine {
       if ((useEmoji || hasPlainEnglish(e)) && _verbFits(e)) e,
   ];
 
-  // ---------------------------------------------------------------- 🧱 sentences
+  // ---------------------------------------------------------------- 🏗️ sentences
 
-  /// 🧱 data (null until the app loads it: then no verbs and no 🧱).
+  /// 🏗️ data (null until the app loads it: then no verbs and no 🏗️).
   SentenceBank? get sentenceBank => _bank;
   set sentenceBank(SentenceBank? b) {
     _bank = b;
@@ -187,10 +187,10 @@ class GameEngine {
   SentenceBank? _bank;
   Map<String, SentenceVerb> _verbBySection = {};
 
-  /// 🧱 difficulty (Easy..Master), also for verbs in the other games.
+  /// 🏗️ difficulty (Easy..Master), also for verbs in the other games.
   int sentenceLevel = sentenceEasy;
 
-  /// Every Verb Pack word by section (switched on or not), so 🧱 can use
+  /// Every Verb Pack word by section (switched on or not), so 🏗️ can use
   /// all verbs when no Verb Pack is on.
   Map<String, VocabEntry> verbWords = {};
 
@@ -211,7 +211,7 @@ class GameEngine {
   /// The sentence behind a generated sentence entry (for its other orders).
   final Expando<Sentence> _sentenceOf = Expando();
 
-  /// Nouns of the Word Packs that are on (🧱 prefers these).
+  /// Nouns of the Word Packs that are on (🏗️ prefers these).
   bool Function(SentenceNoun) _preferredNouns() {
     final active = {for (final e in vocabList) e.sectionName};
     return (n) => n.sections.any(active.contains);
@@ -289,7 +289,7 @@ class GameEngine {
     return out.sublist(1);
   }
 
-  /// 🧱: a sentence for a verb of the Verb Packs that are on (every verb
+  /// 🏗️: a sentence for a verb of the Verb Packs that are on (every verb
   /// when none is on), not one of the last few, at [sentenceLevel]; nouns
   /// from the Word Packs that are on when the verb can use them.
   SentenceRound sentenceRound() {
@@ -354,7 +354,7 @@ class GameEngine {
   }
 
   /// Builds the next round for [game] (1-11). Returns a [ChoiceRound], a
-  /// [TypingRound], (9️⃣) a [ColorRound] or (🧱) a [SentenceRound].
+  /// [TypingRound], (9️⃣) a [ColorRound] or (🏗️) a [SentenceRound].
   Object newRound(int game) {
     currentGame = game;
     switch (game) {

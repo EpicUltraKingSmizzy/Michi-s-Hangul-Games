@@ -309,7 +309,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  /// 🧱 played directly: the first 5 in a row since the app started offers
+  /// 🏗️ played directly: the first 5 in a row since the app started offers
   /// longer sentences, until the difficulty has ever been set to Master.
   Future<void> _maybeSentencePrompt() async {
     if (widget.shuffle || _game != GameEngine.sentenceGame) return;
@@ -811,7 +811,7 @@ class _GameScreenState extends State<GameScreen> {
     ),
   );
 
-  /// The correct letter per slot, for 🕒/🧩/🌀 (a word per slot in 🧱;
+  /// The correct letter per slot, for 🕒/🧩/🌀 (a word per slot in 🏗️;
   /// null in other rounds).
   List<String>? get _ghostChars {
     final r = _round;

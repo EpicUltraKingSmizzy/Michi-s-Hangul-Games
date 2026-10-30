@@ -3,7 +3,7 @@ import 'dart:math';
 import '../models/vocab_entry.dart';
 import 'ini_parser.dart' show parseSections;
 
-/// 🧱 Sentence Builder data: `assets/sentences/nouns.tsv` (which built-in
+/// 🏗️ Sentence Builder data: `assets/sentences/nouns.tsv` (which built-in
 /// words sentences may use, with their English) and
 /// `assets/sentences/verbs.ini` (each verb's sentence shapes). The file
 /// headers explain the formats.
@@ -12,7 +12,7 @@ const String sentenceVerbsAsset = 'assets/sentences/verbs.ini';
 
 enum Tense { present, past, future }
 
-/// ⚙️ Options 🧱 Sentence difficulty steps.
+/// ⚙️ Options 🤖 Sentence difficulty steps.
 const sentenceLevelLabels = ['Easy', 'Medium', 'Hard', 'Master'];
 const int sentenceEasy = 0,
     sentenceMedium = 1,
@@ -223,7 +223,7 @@ class VerbFrame {
   final (String, String)? say;
   const VerbFrame(this.slots, this.template, this.say);
 
-  /// Two-noun frames are 🧱 Master only.
+  /// Two-noun frames are 🏗️ Master only.
   bool get isCombo => slots.length > 1;
 
   /// The noun with 이/가 is the sentence's subject (수업이 끝나요).
@@ -384,7 +384,7 @@ String _bare(String phrase) => phrase.replaceFirst(RegExp(r'^(a|an|the) '), '');
 
 // ------------------------------------------------------------------ round
 
-/// One 🧱 round (or one generated sentence): the English to show, the
+/// One 🏗️ round (or one generated sentence): the English to show, the
 /// Korean in tiles, and the wrong tiles.
 class Sentence {
   final SentenceVerb verb;
@@ -751,7 +751,7 @@ List<SentenceVerb> parseSentenceVerbs(
 
 // -------------------------------------------------------------- generation
 
-/// Builds sentences for a verb at a 🧱 difficulty level.
+/// Builds sentences for a verb at a 🏗️ difficulty level.
 class SentenceMaker {
   final Random rand;
   SentenceMaker(this.rand);

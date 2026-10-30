@@ -64,7 +64,7 @@ const List<GameInfo> gameInfos = [
   // 9️⃣'s solid colour is only a fallback; its theme is the rainbow gradient.
   GameInfo('9️⃣', 'Color match', '🎨', Color(0xFF1E88E5), gradient: rainbowGradient),
   GameInfo('🔟', 'Link Up', '🔗', Color(0xFFFF9F1C)),
-  GameInfo('1️⃣1️⃣', 'Sentence Builder', '🧱', Color(0xFF9C6644)),
+  GameInfo('1️⃣1️⃣', 'Sentence Builder', '🏗️', Color(0xFF9C6644)),
 ];
 
 /// Games in 📊 Stats and 🔀 Shuffle games order.

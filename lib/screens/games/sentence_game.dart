@@ -1,6 +1,6 @@
 part of '../game_screen.dart';
 
-/// 🧱 Sentence Builder: the English sentence, then its Korean built from
+/// 🏗️ Sentence Builder: the English sentence, then its Korean built from
 /// word tiles; the verb is already in place.
 extension _SentenceGame on _GameScreenState {
   /// Tile tapped: it drops into the first empty slot.

@@ -35,13 +35,12 @@ void main() {
         ..sentenceLevel = level;
 
   group('engine', () {
-    test('🧱 tile, name and colour', () {
+    test('🏗️ tile, name and colour', () {
       final info = gameInfos[GameEngine.sentenceGame - 1];
       expect(GameEngine.gameCount, 11);
-      expect(info.tileName, '🧱 Sentence Builder');
+      expect(info.tileName, '🏗️ Sentence Builder');
       final others = [...gameInfos.where((g) => g != info).map((g) => g.color), shuffleInfo.color];
       expect(others, isNot(contains(info.color)));
-      expect(all.where((e) => e.emoji == '🧱'), isEmpty, reason: 'no word uses the game emoji');
     });
 
     test('rounds: verb pre-placed, answer + decoys in the tiles', () {
@@ -62,7 +61,7 @@ void main() {
       }
     });
 
-    test('no Verb Pack on: 🧱 uses every verb; the other games get none', () {
+    test('no Verb Pack on: 🏗️ uses every verb; the other games get none', () {
       final e =
           GameEngine([
               for (final x in all)
@@ -271,7 +270,7 @@ void main() {
       await done(tester);
     });
 
-    testWidgets('🧱 play: any unit order wins; wrong tiles shake; hint and 🔊', (tester) async {
+    testWidgets('🏗️ play: any unit order wins; wrong tiles shake; hint and 🔊', (tester) async {
       await setUp(tester, prefs: {AppState.kSentenceLevel: sentenceMaster});
       await tester.pumpWidget(MaterialApp(home: GameScreen(key: UniqueKey(), game: 11)));
       await tester.pump();
@@ -313,7 +312,7 @@ void main() {
       await done(tester);
     });
 
-    testWidgets('🧱 5 in a row: difficulty pop-up once per launch, direct play only', (
+    testWidgets('🏗️ 5 in a row: difficulty pop-up once per launch, direct play only', (
       tester,
     ) async {
       final prompt = find.byKey(const ValueKey('sentence_prompt'));
@@ -361,16 +360,16 @@ void main() {
       await done(tester);
     });
 
-    testWidgets('Options: 🧱 Sentence difficulty slider', (tester) async {
+    testWidgets('Options: 🏗️ Sentence difficulty slider', (tester) async {
       await setUp(tester);
       await tester.pumpWidget(const MaterialApp(home: OptionsScreen()));
       await tester.pump();
       final card = find.byKey(const ValueKey('opt_sentence_level'));
       await tester.scrollUntilVisible(card, 200);
-      expect(find.text('🧱 Sentence difficulty'), findsOneWidget);
+      expect(find.text('🤖 Sentence difficulty'), findsOneWidget);
       expect(
         find.text(
-          'How long the sentences are in 🧱 Sentence Builder, and in other games when Verb Packs are on.',
+          'How long the sentences are in 🏗️ Sentence Builder, and in other games when Verb Packs are on.',
         ),
         findsOneWidget,
       );

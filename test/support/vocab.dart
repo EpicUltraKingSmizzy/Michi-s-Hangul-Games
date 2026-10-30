@@ -12,7 +12,7 @@ String readPackFile(String id) => File(packAsset(id)).readAsStringSync();
 List<VocabEntry> diskVocab() =>
     loadBuiltInVocab(readVocabIndex(), readPackFile);
 
-/// The 🧱 sentence data, parsed and linked exactly like the app does.
+/// The 🏗️ sentence data, parsed and linked exactly like the app does.
 SentenceBank diskSentences() {
   final ids = parsePackIndex(readVocabIndex());
   final verbIds = ids.where(isVerbPackId).toSet();
