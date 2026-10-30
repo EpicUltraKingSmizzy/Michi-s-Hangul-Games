@@ -35,9 +35,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _open(Widget screen) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
 
-  /// 🧩/🌀 shared tile: its two bubbles, anchored to the tile.
+  /// 🧩/🌀 shared tile: its two bubbles, over the tile.
   final _scrambleBubbles = OverlayPortalController();
-  final _scrambleLink = LayerLink();
+  final _scrambleTileKey = GlobalKey();
+
+  /// The 🧩 tile's rect on screen when it was tapped.
+  Rect _scrambleRect = Rect.zero;
+
+  void _showScrambleBubbles() {
+    final box = _scrambleTileKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    _scrambleRect = box.localToGlobal(Offset.zero) & box.size;
+    _scrambleBubbles.show();
+  }
 
   /// The two bubbles over the 🧩 tile; a tap anywhere else closes them.
   Widget _bubbles(BuildContext context) => Stack(
@@ -49,34 +59,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           onTap: _scrambleBubbles.hide,
         ),
       ),
-      CompositedTransformFollower(
-        link: _scrambleLink,
-        targetAnchor: Alignment.center,
-        followerAnchor: Alignment.center,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.3, end: 1),
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.elasticOut,
-          builder: (_, t, child) => Transform.scale(scale: t, child: child),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (final g in scrambleTileGames) ...[
-                if (g != scrambleTileGames.first) const SizedBox(height: 10),
-                BouncyButton(
-                  key: ValueKey('bubble_$g'),
-                  color: gameInfos[g - 1].color,
-                  radius: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  onTap: () {
-                    _scrambleBubbles.hide();
-                    _open(GameScreen(game: g));
-                  },
-                  child: Text(gameInfos[g - 1].tileName, style: const TextStyle(fontSize: 21)),
-                ),
-              ],
-            ],
+      Positioned.fill(
+        child: CustomSingleChildLayout(
+          delegate: _BubblesLayout(_scrambleRect),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.3, end: 1),
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.elasticOut,
+            builder: (_, t, child) => Transform.scale(scale: t, child: child),
+            child: IntrinsicWidth(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final g in scrambleTileGames) ...[
+                    if (g != scrambleTileGames.first) const SizedBox(height: 10),
+                    BouncyButton(
+                      key: ValueKey('bubble_$g'),
+                      color: gameInfos[g - 1].color,
+                      radius: 30,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      onTap: () {
+                        _scrambleBubbles.hide();
+                        _open(GameScreen(game: g));
+                      },
+                      child: Text(gameInfos[g - 1].tileName, style: const TextStyle(fontSize: 21)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -235,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       gradient: info.gradient,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       onTap: both
-          ? _scrambleBubbles.show
+          ? _showScrambleBubbles
           : () => _open(shuffle ? const GameScreen.shuffle() : GameScreen(game: game)),
       child: Stack(
         children: [
@@ -259,13 +271,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
     if (!both) return tile;
-    return CompositedTransformTarget(
-      link: _scrambleLink,
-      child: OverlayPortal(
-        controller: _scrambleBubbles,
-        overlayChildBuilder: _bubbles,
-        child: tile,
-      ),
+    return OverlayPortal(
+      key: _scrambleTileKey,
+      controller: _scrambleBubbles,
+      overlayChildBuilder: _bubbles,
+      child: tile,
     );
   }
 
@@ -400,4 +410,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ],
     ),
   );
+}
+
+/// Centres the 🧩/🌀 bubbles on the tile, kept fully on screen.
+class _BubblesLayout extends SingleChildLayoutDelegate {
+  final Rect tile;
+  const _BubblesLayout(this.tile);
+
+  static const _margin = 12.0;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints c) =>
+      BoxConstraints.loose(c.biggest).deflate(const EdgeInsets.all(_margin));
+
+  @override
+  Offset getPositionForChild(Size screen, Size child) {
+    double fit(double v, double max) => max < _margin ? _margin : v.clamp(_margin, max);
+    return Offset(
+      fit(tile.center.dx - child.width / 2, screen.width - child.width - _margin),
+      fit(tile.center.dy - child.height / 2, screen.height - child.height - _margin),
+    );
+  }
+
+  @override
+  bool shouldRelayout(_BubblesLayout old) => old.tile != tile;
 }
