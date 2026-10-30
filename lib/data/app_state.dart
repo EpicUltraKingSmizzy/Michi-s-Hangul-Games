@@ -440,6 +440,9 @@ class AppState extends ChangeNotifier {
   /// Whether a word is in play with the current switches.
   bool isWordVisible(VocabEntry e) {
     final pack = e.packId.isEmpty ? customBundleId : e.packId;
+    // Verb Pack words only appear inside sentences; no game makes those
+    // yet, so they are never in play.
+    if (isVerbPackId(pack)) return false;
     // A built-in word in several packs is in play when any of them is on.
     if (isBuiltInWord(e)) {
       return enabledBundles.contains(pack) || e.alsoPacks.any(enabledBundles.contains);
@@ -475,9 +478,18 @@ class AppState extends ChangeNotifier {
     await _savePacks();
   }
 
-  /// Built-in packs shown on the Word Packs screen (My Words excluded).
-  Iterable<String> get builtInPackIds =>
-      builtInBundles.map((b) => b.id).where((id) => wordsInPack(id).isNotEmpty);
+  /// Built-in packs shown on the Word Packs screen (My Words and the
+  /// Verb Packs excluded).
+  Iterable<String> get builtInPackIds => builtInBundles
+      .where((b) => !b.isVerbPack)
+      .map((b) => b.id)
+      .where((id) => wordsInPack(id).isNotEmpty);
+
+  /// Verb Packs, listed on the Verb Packs screen.
+  Iterable<String> get verbPackIds => builtInBundles
+      .where((b) => b.isVerbPack)
+      .map((b) => b.id)
+      .where((id) => wordsInPack(id).isNotEmpty);
 
   /// Every pack the "All packs" switch controls: built-in and user packs,
   /// never My Words.

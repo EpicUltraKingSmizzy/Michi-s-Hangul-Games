@@ -15,7 +15,20 @@ class WordBundle {
   /// Whether the pack starts switched on, both on a fresh install and for a
   /// player updating from a version without it.
   final bool defaultOn;
-  const WordBundle(this.id, this.emoji, this.name, this.blurb, {this.defaultOn = true});
+
+  /// A Verb Pack (`Type = verb` in its `[Pack]` header): dictionary-form
+  /// verbs, listed under the Verb Packs button rather than the main list.
+  /// Its words only ever appear inside sentences, so until a sentence game
+  /// exists they are left out of every game.
+  final bool isVerbPack;
+  const WordBundle(
+    this.id,
+    this.emoji,
+    this.name,
+    this.blurb, {
+    this.defaultOn = true,
+    this.isVerbPack = false,
+  });
 }
 
 List<WordBundle> _builtIn = const [];
@@ -29,6 +42,9 @@ Set<String> get defaultOffBundles => {
   for (final b in _builtIn)
     if (!b.defaultOn) b.id,
 };
+
+/// Whether [id] is a built-in Verb Pack.
+bool isVerbPackId(String id) => builtInBundleById(id)?.isVerbPack ?? false;
 
 const String emotionsBundleId = 'emotions';
 

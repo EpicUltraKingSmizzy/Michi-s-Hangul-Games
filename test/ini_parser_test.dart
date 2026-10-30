@@ -45,7 +45,7 @@ void main() {
   test("parses the user's bundled vocab file", () {
     final entries = diskVocab();
     // + 412 top-500 nouns (v9) − 3 family names, now seeded My Words (v13)
-    expect(entries.length, 566 + 412 - 3 + 24 - 81); // −81 🏃 Action Heroes removed; v15: +24 🗨️ Everyday Talk
+    expect(entries.length, 566 + 412 - 3 + 24 - 81 + 121); // −81 🏃 Action Heroes removed, +121 Verb Packs; v15: +24 🗨️ Everyday Talk
     expect(entries.first.packId, builtInBundles.first.id);
     final spider = entries.singleWhere((e) => e.sectionName == 'Entry_00000');
     expect([spider.packId, spider.english1, spider.korean1], ['animals', 'Spider', '거미']);
@@ -58,7 +58,7 @@ void main() {
     for (final e in entries) {
       counts.update(e.packId, (v) => v + 1, ifAbsent: () => 1);
     }
-    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81); // −81: 🏃 Action Heroes removed
+    expect(counts.values.fold(0, (a, b) => a + b), 566 + 412 - 3 + 24 - 81 + 121); // −81 🏃 Action Heroes, +121 Verb Packs
     expect(counts, {
       'everyday-talk': 24,
       'phrases': 24,
@@ -84,6 +84,11 @@ void main() {
       'big-words': 68,
       'big-brain-ideas': 56,
       'how-things-are': 59,
+      'daily-grind': 24,
+      'on-the-move': 25,
+      'talk-and-think': 24,
+      'give-and-take': 24,
+      'life-happens': 24,
     });
     expect(builtInBundles.map((b) => b.id).toSet(), counts.keys.toSet());
   });

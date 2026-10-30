@@ -43,18 +43,24 @@ class BundlesScreen extends StatelessWidget {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-              for (final id in appState.builtInPackIds)
-                _BundleCard(
-                  key: ValueKey('pack_$id'),
-                  emoji: builtInBundleById(id)!.emoji,
-                  name: builtInBundleById(id)!.name,
-                  blurb: builtInBundleById(id)!.blurb,
-                  words: appState.wordsInPack(id),
-                  enabled: appState.enabledBundles.contains(id),
-                  onChanged: (v) => appState.setBundleEnabled(id, v),
-                  help: numberHelpForPack(id),
-                  helpKey: 'pack_help_$id',
+              if (appState.verbPackIds.isNotEmpty)
+                Card(
+                  key: const ValueKey('verb_packs_button'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  margin: const EdgeInsets.symmetric(vertical: 7),
+                  child: ListTile(
+                    title: const Text(
+                      'Verb Packs',
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+                    ),
+                    subtitle: Text('${appState.verbPackIds.length} packs'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => const VerbPacksScreen())),
+                  ),
                 ),
+              for (final id in appState.builtInPackIds) _builtInCard(id),
               for (final p in appState.userPacks)
                 _BundleCard(
                   key: ValueKey('pack_${p.id}'),
@@ -80,6 +86,54 @@ class BundlesScreen extends StatelessWidget {
                   child: const Text('Add & manage ✏️'),
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A built-in pack's card (the main list and the Verb Packs screen).
+Widget _builtInCard(String id) {
+  final b = builtInBundleById(id)!;
+  return _BundleCard(
+    key: ValueKey('pack_$id'),
+    emoji: b.emoji,
+    name: b.name,
+    blurb: b.blurb,
+    words: appState.wordsInPack(id),
+    enabled: appState.enabledBundles.contains(id),
+    onChanged: (v) => appState.setBundleEnabled(id, v),
+    help: numberHelpForPack(id),
+    helpKey: 'pack_help_$id',
+  );
+}
+
+/// The Verb Packs, opened from the Word Packs screen. Same cards as the
+/// main list (switch, expand, tap to hear, long press to edit).
+class VerbPacksScreen extends StatelessWidget {
+  const VerbPacksScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FunBackground(
+      child: ListenableBuilder(
+        listenable: appState,
+        builder: (context, _) => Scaffold(
+          appBar: AppBar(title: const Text('Verb Packs')),
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 30),
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  'Verbs will appear in sentences in a game coming soon.',
+                  key: ValueKey('verb_packs_note'),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              for (final id in appState.verbPackIds) _builtInCard(id),
             ],
           ),
         ),

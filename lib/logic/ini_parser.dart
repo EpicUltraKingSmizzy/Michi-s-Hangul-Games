@@ -5,16 +5,20 @@ import '../models/vocab_entry.dart';
 /// pack ids in display order, and each pack is `assets/vocab/<id>.ini`.
 ///
 /// A pack file starts with a `[Pack]` header (Id, Emoji, Name, Blurb,
-/// DefaultOn) followed by one `[Section]` per word. Every word's home pack is
+/// DefaultOn, and `Type = verb` for a Verb Pack) followed by one `[Section]` per word. Every word's home pack is
 /// the file it is in. Word keys (case-insensitive): English1, English2, Emoji,
 /// Korean1, Korean2, AlsoPacks (comma-separated extra pack ids or names),
-/// IsFullPhrase. Blank lines and lines starting with `;` or `#` are skipped.
+/// IsFullPhrase, Polite (a Verb Pack word's polite 해요 form, given for
+/// irregular verbs; checked by the validator, not used yet). Blank lines and lines starting with `;` or `#` are skipped.
 const String vocabDir = 'assets/vocab';
 const String vocabIndexAsset = '$vocabDir/index.txt';
 String packAsset(String id) => '$vocabDir/$id.ini';
 
 const String packHeaderSection = 'Pack';
-const Set<String> packHeaderKeys = {'id', 'emoji', 'name', 'blurb', 'defaulton'};
+
+/// `Type =` value of a Verb Pack's `[Pack]` header.
+const String verbPackType = 'verb';
+const Set<String> packHeaderKeys = {'id', 'type', 'emoji', 'name', 'blurb', 'defaulton'};
 const Set<String> wordKeys = {
   'english1',
   'english2',
@@ -23,6 +27,7 @@ const Set<String> wordKeys = {
   'korean2',
   'alsopacks',
   'isfullphrase',
+  'polite',
 };
 
 final _lineBreak = RegExp(r'\r\n|\n|\r');
@@ -104,6 +109,7 @@ WordBundle? parsePackHeader(String content) {
       s.get('name'),
       s.get('blurb'),
       defaultOn: s.get('defaulton').toLowerCase() != 'false',
+      isVerbPack: s.get('type').toLowerCase() == verbPackType,
     );
   }
   return null;
@@ -134,7 +140,9 @@ List<VocabEntry> loadBuiltInVocab(String index, String Function(String id) readP
 
 /// Problems in the vocab files (empty when all is well): bad or mismatched
 /// pack headers, duplicate section names across files, unknown AlsoPacks ids,
-/// missing English1/Korean1, and unknown keys.
+/// missing English1/Korean1, and unknown keys. Verb Pack words must be
+/// dictionary forms (Korean1 ending in 다) with no emoji, and only they may
+/// have a Polite form.
 List<String> validateVocab(String index, String Function(String id) readPack) {
   final errors = <String>[];
   final ids = parsePackIndex(index);
@@ -144,6 +152,7 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
   final also = <(String, String)>[];
   for (final id in ids) {
     final sections = parseSections(readPack(id));
+    final isVerb = sections.isNotEmpty && sections.first.get('type').toLowerCase() == verbPackType;
     if (sections.isEmpty || sections.first.name != packHeaderSection) {
       errors.add('$id: first section must be [$packHeaderSection]');
     }
@@ -155,6 +164,9 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
         if (s.get('id') != id) errors.add('$id [Pack]: Id must be "$id"');
         for (final k in ['emoji', 'name', 'blurb']) {
           if (s.get(k).isEmpty) errors.add('$id [Pack]: missing $k');
+        }
+        if (!{'', verbPackType}.contains(s.get('type').toLowerCase())) {
+          errors.add('$id [Pack]: Type must be $verbPackType or left out');
         }
         if (!{'true', 'false'}.contains(s.get('defaulton').toLowerCase())) {
           errors.add('$id [Pack]: DefaultOn must be true or false');
@@ -177,6 +189,12 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
       }
       if (s.get('english1').isEmpty) errors.add('$where: missing English1');
       if (s.get('korean1').isEmpty) errors.add('$where: missing Korean1');
+      if (isVerb) {
+        if (!s.get('korean1').endsWith('다')) errors.add('$where: a verb must end in 다');
+        if (s.get('emoji').isNotEmpty) errors.add('$where: verbs have no emoji');
+      } else if (s.get('polite').isNotEmpty) {
+        errors.add('$where: Polite is for Verb Pack words only');
+      }
     }
   }
   for (final (where, x) in also) {

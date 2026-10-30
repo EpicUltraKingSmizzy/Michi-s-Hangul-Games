@@ -33,6 +33,8 @@ const _newPacks = [
   'how-things-are',
 ];
 
+const _verbPacks = ['daily-grind', 'on-the-move', 'talk-and-think', 'give-and-take', 'life-happens'];
+
 VocabEntry _w(String korean, String english) =>
     _all.singleWhere((e) => e.korean1 == korean && e.english1 == english);
 
@@ -61,9 +63,9 @@ void main() {
   group('data', () {
     test('10 new packs after the old ones, in theme order, with Big Words', () {
       final ids = builtInBundles.map((b) => b.id).toList();
-      expect(ids.sublist(ids.length - 10), _newPacks);
+      expect(ids.sublist(ids.length - 15, ids.length - 5), _newPacks); // then the 5 Verb Packs
       expect(ids.indexOf('whos-who'), ids.indexOf('grabbag') + 1);
-      expect(defaultOffBundles, {'phrases', 'everyday-talk', ..._newPacks});
+      expect(defaultOffBundles, {'phrases', 'everyday-talk', ..._newPacks, ..._verbPacks});
       final big = builtInBundleById('big-words')!;
       expect((big.emoji, big.name), ('🏛️', 'Big Words'));
       expect(builtInBundles.where((b) => b.name.contains('Grown-Up')), isEmpty);
