@@ -201,6 +201,7 @@ class AppState extends ChangeNotifier {
       for (final id in parsePackIndex(index)) id: await rootBundle.loadString(packAsset(id)),
     };
     builtIn = loadBuiltInVocab(index, (id) => packTexts[id]!);
+    GameEngine.notTogether = {for (final t in packTexts.values) ...parseNotWith(t)};
     _originalBySection
       ..clear()
       ..addEntries(builtIn.map((e) => MapEntry(e.sectionName, e)));

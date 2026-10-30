@@ -7,6 +7,7 @@ import 'color_game.dart';
 import 'link_game.dart';
 import 'sentences.dart';
 import 'time_game.dart';
+import 'ini_parser.dart' show notWithKey;
 
 export 'color_game.dart';
 export 'link_game.dart';
@@ -507,6 +508,17 @@ class GameEngine {
   /// With [useEmoji] off the English is what shows, so equal English clashes.
   /// With [showBracketNotes] off the English is compared without its notes
   /// (Rice (meal) and Rice (uncooked) both show "Rice").
+  /// Word pairs that must never share a round (the vocab files' `NotWith =`,
+  /// e.g. 셔츠 Shirt / 티셔츠 T-shirt), as [notWithKey]s. Set when the app loads.
+  static Set<String> notTogether = {};
+
+  /// Whether [a] and [b] are a [notTogether] pair.
+  static bool neverTogether(VocabEntry a, VocabEntry b) =>
+      notTogether.isNotEmpty &&
+      a.sectionName.isNotEmpty &&
+      b.sectionName.isNotEmpty &&
+      notTogether.contains(notWithKey(a.sectionName, b.sectionName));
+
   static bool entriesClash(
     VocabEntry a,
     VocabEntry b, {
@@ -523,7 +535,8 @@ class GameEngine {
     // English (부모 "Parents" next to 부모님 👫); or a shared Korean spelling
     // (homographs such as 차 tea / 차 car): the two would both look right.
     final bothEmoji = useEmoji && a.emoji.isNotEmpty && b.emoji.isNotEmpty;
-    return en(a) == en(b) ||
+    return neverTogether(a, b) ||
+        en(a) == en(b) ||
         (!bothEmoji && word(a).isNotEmpty && word(a) == word(b)) ||
         ko(a).intersection(ko(b)).isNotEmpty;
   }
@@ -546,11 +559,13 @@ class GameEngine {
       final wrong = _pickDecoys(target, _shuffled(others.where(tier)), count);
       if (wrong.length == count) return wrong;
     }
-    // Tiny vocabulary: fall back to the original behaviour.
-    final pool = List.of(others);
+    // Tiny vocabulary: fall back to the original behaviour (but a NotWith
+    // pair still never shares a round).
+    final pool = others.where((x) => !neverTogether(x, target)).toList();
     final wrong = <VocabEntry>[];
     while (wrong.length < count && pool.isNotEmpty) {
-      wrong.add(pool.removeAt(rand.nextInt(pool.length)));
+      final x = pool.removeAt(rand.nextInt(pool.length));
+      if (!wrong.any((w) => neverTogether(w, x))) wrong.add(x);
     }
     return wrong;
   }

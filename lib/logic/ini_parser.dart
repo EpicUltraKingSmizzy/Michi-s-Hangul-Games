@@ -28,6 +28,7 @@ const Set<String> wordKeys = {
   'alsopacks',
   'isfullphrase',
   'polite',
+  'notwith',
 };
 
 final _lineBreak = RegExp(r'\r\n|\n|\r');
@@ -138,10 +139,24 @@ List<VocabEntry> loadBuiltInVocab(String index, String Function(String id) readP
   ];
 }
 
+/// Words that must never share a round (`NotWith = Entry_00187, ...`, other
+/// words' section names): each pair once, as `a|b` with a before b.
+Set<String> parseNotWith(String content) => {
+  for (final s in parseSections(content))
+    for (final p in s.pairs)
+      if (p.key == 'notwith')
+        for (final x in p.value.split(',').map((x) => x.trim()))
+          if (x.isNotEmpty) notWithKey(s.name, x),
+};
+
+/// The [parseNotWith] key for two section names (either order).
+String notWithKey(String a, String b) => a.compareTo(b) <= 0 ? '$a|$b' : '$b|$a';
+
 /// Korean1 → Polite form for every word in a pack file that gives one.
 Map<String, String> parsePoliteForms(String content) => {
   for (final s in parseSections(content))
-    if (s.name != packHeaderSection && s.get('polite').isNotEmpty) s.get('korean1'): s.get('polite'),
+    if (s.name != packHeaderSection && s.get('polite').isNotEmpty)
+      s.get('korean1'): s.get('polite'),
 };
 
 /// Problems in the vocab files (empty when all is well): bad or mismatched
@@ -156,6 +171,7 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
   final packNames = <String>{};
   final seen = <String, String>{};
   final also = <(String, String)>[];
+  final notWith = <(String, String)>[];
   for (final id in ids) {
     final sections = parseSections(readPack(id));
     final isVerb = sections.isNotEmpty && sections.first.get('type').toLowerCase() == verbPackType;
@@ -187,6 +203,11 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
       seen[s.name] = id;
       for (final p in s.pairs) {
         if (!wordKeys.contains(p.key)) errors.add('$where: unknown key ${p.key}');
+        if (p.key == 'notwith') {
+          for (final x in p.value.split(',').map((x) => x.trim())) {
+            if (x.isNotEmpty) notWith.add((where, x));
+          }
+        }
         if (p.key == 'alsopacks') {
           for (final x in p.value.split(',').map((x) => x.trim())) {
             if (x.isNotEmpty) also.add((where, x));
@@ -202,6 +223,9 @@ List<String> validateVocab(String index, String Function(String id) readPack) {
         errors.add('$where: Polite is for Verb Pack words only');
       }
     }
+  }
+  for (final (where, x) in notWith) {
+    if (!seen.containsKey(x)) errors.add('$where: unknown NotWith section $x');
   }
   for (final (where, x) in also) {
     if (!ids.contains(x)) errors.add('$where: unknown AlsoPacks id $x');

@@ -170,8 +170,8 @@ void main() {
     expect(byEn('Document').emoji, isEmpty, reason: '🗎 is not an emoji; it showed blank');
     expect(
       diskVocab().where((e) => e.emoji.isNotEmpty).length,
-      66 + 124 + 2 + 12 + 7 + 27 - 1 + 20 - 7 + 67 + 36 - 1 - 2 - 2 - 1 - 1,
-    ); // + Lock, Thought, colours, weekdays, round 5; − Appointment; + round 8; − 7 Handy Phrases emojis; + 67 emoji-only English1 moved to Emoji (v8); + 36 noun emojis (v9); − 💪 Strength (v10); − Time and Minute emojis; − Problem and Name emojis; − Construction emoji (v11); − Document 🗎 (not an emoji)
+      66 + 124 + 2 + 12 + 7 + 27 - 1 + 20 - 7 + 67 + 36 - 1 - 2 - 2 - 1 - 1 - 7,
+    ); // + Lock, Thought, colours, weekdays, round 5; − Appointment; + round 8; − 7 Handy Phrases emojis; + 67 emoji-only English1 moved to Emoji (v8); + 36 noun emojis (v9); − 💪 Strength (v10); − Time and Minute emojis; − Problem and Name emojis; − Construction emoji (v11); − Document 🗎 (not an emoji); − 7 weekday emojis
     // Round 4.
     expect((byEn('Older Brother').korean1, byEn('Older Brother').korean2), ('형', '오빠'));
     expect((byEn('Older Sister').korean1, byEn('Older Sister').korean2), ('누나', '언니'));
@@ -182,7 +182,18 @@ void main() {
     expect((byEn('Orange (fruit)').korean1, byEn('Orange (color)').korean1), ('오렌지', '주황색'));
     expect((byEn('Red').korean1, byEn('Red').korean2, byEn('Red').emoji), ('빨간색', '빨강', '🟥'));
     expect(byEn('Color').packId, 'colours');
-    expect((byEn('Tuesday').korean1, byEn('Tuesday').emoji), ('화요일', '☀️3️⃣'));
+    expect((byEn('Tuesday').korean1, byEn('Tuesday').emoji), ('화요일', ''));
+    for (final d in [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ]) {
+      expect(byEn(d).emoji, isEmpty, reason: '$d has no emoji');
+    }
     expect(byEn('Sunday').packId, byEn('January').packId);
     final native = entries.where((e) => e.packId == 'native').toList();
     expect(native.map((e) => e.english1), [for (var i = 1; i <= 20; i++) '$i']);

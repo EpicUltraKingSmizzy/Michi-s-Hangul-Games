@@ -33,6 +33,7 @@ English1 = Spider
 Korean1 = 거미
 Emoji = 🕷️
 ; optional: English2, Korean2, IsFullPhrase = true, AlsoPacks = food, animals
+; optional: NotWith = Entry_00187 (section names of words too alike to share a round)
 ```
 
 Never rename a pack `Id` or a word section, because players' saved data uses them.
