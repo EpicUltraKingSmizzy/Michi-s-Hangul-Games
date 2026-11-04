@@ -427,6 +427,22 @@ class Sentence {
       ? [if (_split) verb.splitNoun, if (negated) '안', ...verbPieces]
       : [if (negated) '안'];
 
+  /// Whether tile [a] then tile [b] are written as one word, with no space
+  /// (친구+가, 먹었+어요, 끝날 거+예요).
+  bool joins(String a, String b) =>
+      units.any((u) => u.length == 2 && u[0] == a && u[1] == b) ||
+      (verbPlaced && verbPieces.length == 2 && verbPieces[0] == a && verbPieces[1] == b);
+
+  /// The Korean as written from [tiles] in slot order, with word spacing.
+  String spaced(List<String> tiles) {
+    final b = StringBuffer();
+    for (var i = 0; i < tiles.length; i++) {
+      if (i > 0 && !joins(tiles[i - 1], tiles[i])) b.write(' ');
+      b.write(tiles[i]);
+    }
+    return b.toString();
+  }
+
   /// The slot tiles in the usual order (안 and the verb last).
   List<String> get answerTiles => [for (final u in units) ...u, ...tailTiles];
 

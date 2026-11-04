@@ -30,6 +30,10 @@ extension _SentenceGame on _GameScreenState {
     final slots = _slots!;
     final s = r.sentence;
     final open = s.negated ? slots.length - 1 : slots.length;
+    // A slot's word, or the word the hint shows there.
+    String at(int i) => slots.charAt(i) ?? r.answer[i];
+    // No word gap after a slot whose tile joins the next (친구+가, 먹었+어요).
+    bool joined(int i) => i + 1 < slots.length && s.joins(at(i), at(i + 1));
     return [
       _promptCard(s.english, false),
       const SizedBox(height: 12),
@@ -43,9 +47,10 @@ extension _SentenceGame on _GameScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (s.verbPlaced)
-                for (var i = 0; i < slots.length; i++) _sentenceSlot(i, slots)
+                for (var i = 0; i < slots.length; i++) _sentenceSlot(i, slots, joinNext: joined(i))
               else ...[
-                for (var i = 0; i < open; i++) _sentenceSlot(i, slots),
+                for (var i = 0; i < open; i++)
+                  _sentenceSlot(i, slots, joinNext: i + 1 < open && joined(i)),
                 if (s.fixedBeforeNegation.isNotEmpty) _fixedChip(s.fixedBeforeNegation),
                 if (s.negated) _sentenceSlot(slots.length - 1, slots),
                 _fixedChip(s.verbChip, key: const ValueKey('verb_chip')),
@@ -89,7 +94,8 @@ extension _SentenceGame on _GameScreenState {
   }
 
   /// One word slot; as wide as its word (or the faded hint).
-  Widget _sentenceSlot(int i, TileSlots slots) {
+  /// [joinNext]: no word gap before the next slot.
+  Widget _sentenceSlot(int i, TileSlots slots, {bool joinNext = false}) {
     final placed = slots.charAt(i);
     final ghost = placed == null && _hintVisible ? (_ghostChars?[i]) : null;
     return GestureDetector(
@@ -97,7 +103,7 @@ extension _SentenceGame on _GameScreenState {
       onTap: () => _onSlot(i),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
-        margin: const EdgeInsets.symmetric(horizontal: 3),
+        margin: EdgeInsets.only(left: 3, right: joinNext ? 0 : 9),
         constraints: const BoxConstraints(minWidth: 52),
         height: 60,
         padding: const EdgeInsets.symmetric(horizontal: 10),

@@ -769,7 +769,8 @@ class GameEngine {
     String a1;
     String a2 = '';
     if (targetIsEnglish) {
-      a1 = target.korean1.replaceAll(' ', '');
+      // A sentence keeps its word spacing (shown in 💡); typing ignores spaces.
+      a1 = _sentenceOf[target] != null ? target.korean1 : target.korean1.replaceAll(' ', '');
       a2 = target.korean2.isNotEmpty ? target.korean2.replaceAll(' ', '') : '';
       prompt = _englishSide(target);
       if (a2.length >= minimumCharacterScrambleLength && rand.nextInt(2) == 0) {

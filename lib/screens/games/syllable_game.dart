@@ -18,7 +18,6 @@ extension _SyllableGame on _GameScreenState {
     await _checkSlots(r);
   }
 
-
   Future<void> _checkSlots(TypingRound r) async {
     final slots = _slots!;
     if (!slots.isFull) return;
@@ -37,6 +36,21 @@ extension _SyllableGame on _GameScreenState {
     }
   }
 
+  /// The slot ranges [start, end) to keep together: one per word of a
+  /// spaced answer (a sentence), else one per slot.
+  List<(int, int)> _slotWords(TypingRound r, int count) {
+    final words = r.answer1.split(' ').where((w) => w.isNotEmpty).toList();
+    if (words.length < 2) return [for (var i = 0; i < count; i++) (i, i + 1)];
+    final out = <(int, int)>[];
+    var start = 0;
+    for (final w in words) {
+      final end = min(count, start + w.length);
+      if (end > start) out.add((start, end));
+      start = end;
+    }
+    return out;
+  }
+
   /// 5️⃣/6️⃣: one box per answer letter, then the tile pile and ⌫.
   List<Widget> _slotBody(TypingRound r, TileSlots slots) {
     final box = slots.length <= 5 ? 58.0 : (slots.length <= 8 ? 46.0 : 38.0);
@@ -47,7 +61,26 @@ extension _SyllableGame on _GameScreenState {
           alignment: WrapAlignment.center,
           spacing: 6,
           runSpacing: 8,
-          children: [for (var i = 0; i < slots.length; i++) _slotBox(i, slots, box)],
+          children: [
+            for (final w in _slotWords(r, slots.length))
+              if (!r.answer1.trim().contains(' '))
+                _slotBox(w.$1, slots, box)
+              else
+                Padding(
+                  // A sentence: a wider gap between words.
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = w.$1; i < w.$2; i++)
+                        Padding(
+                          padding: EdgeInsets.only(left: i == w.$1 ? 0 : 6),
+                          child: _slotBox(i, slots, box),
+                        ),
+                    ],
+                  ),
+                ),
+          ],
         ),
       ),
       const SizedBox(height: 16),
