@@ -38,3 +38,7 @@ Emoji = 🕷️
 
 Never rename a pack `Id` or a word section, because players' saved data uses them.
 `flutter test` checks the files for duplicate section names, unknown keys or AlsoPacks ids, missing English1/Korean1, and bad pack headers.
+
+## License
+
+Michi's Hangul Games is licensed under the [GNU General Public License v3.0](LICENSE).
