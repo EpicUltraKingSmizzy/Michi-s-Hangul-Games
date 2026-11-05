@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,11 +10,14 @@ final AppState appState = AppState();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  // Draw behind transparent system bars with dark icons from the first frame;
-  // AppBarTheme and FunBackground's AnnotatedRegion keep it that way per screen.
-  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(lightBackgroundOverlay);
+  // No system bars or orientation lock on the web.
+  if (!kIsWeb) {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    // Draw behind transparent system bars with dark icons from the first frame;
+    // AppBarTheme and FunBackground's AnnotatedRegion keep it that way per screen.
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(lightBackgroundOverlay);
+  }
   await appState.load();
   runApp(const HangulHoorayApp());
 }

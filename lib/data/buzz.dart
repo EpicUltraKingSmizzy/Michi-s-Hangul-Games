@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Short vibrations for right / wrong answers.
@@ -15,6 +16,7 @@ class Buzz {
   static Future<void> wrong() => _buzz(25, 70, HapticFeedback.lightImpact);
 
   static Future<void> _buzz(int ms, int amplitude, Future<void> Function() fallback) async {
+    if (kIsWeb) return; // no vibration on the web
     try {
       await _channel.invokeMethod('vibrate', {'ms': ms, 'amplitude': amplitude});
     } on MissingPluginException {
