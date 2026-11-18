@@ -257,3 +257,102 @@ class RenderKeepColor extends RenderProxyBox {
 /// How many [KeepColor] spots are on screen (for tests).
 @visibleForTesting
 int get keepColorCount => _keepColor.boxes.length;
+
+/// Lays [child] out at its natural height and, when that is taller than
+/// [maxHeight], scales it down to fit (laying it out a little wider first so
+/// it still fills the width). Nothing is rearranged; it only shrinks.
+class FitToHeight extends SingleChildRenderObjectWidget {
+  final double maxHeight;
+  const FitToHeight({super.key, required this.maxHeight, super.child});
+
+  @override
+  RenderFitToHeight createRenderObject(BuildContext context) => RenderFitToHeight(maxHeight);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderFitToHeight renderObject) =>
+      renderObject.maxHeight = maxHeight;
+}
+
+class RenderFitToHeight extends RenderBox with RenderObjectWithChildMixin<RenderBox> {
+  RenderFitToHeight(this._maxHeight);
+
+  double _maxHeight;
+  double get maxHeight => _maxHeight;
+  set maxHeight(double v) {
+    if (v == _maxHeight) return;
+    _maxHeight = v;
+    markNeedsLayout();
+  }
+
+  /// The child's scale (1 = natural size) and left offset.
+  double scale = 1;
+  double _dx = 0;
+
+  Matrix4 get _transform => Matrix4.translationValues(_dx, 0, 0)..scaleByDouble(scale, scale, 1, 1);
+
+  @override
+  void performLayout() {
+    final w = constraints.maxWidth;
+    final c = child;
+    if (c == null || !w.isFinite) {
+      size = constraints.constrain(Size(w.isFinite ? w : 0, 0));
+      return;
+    }
+    c.layout(BoxConstraints.tightFor(width: w), parentUsesSize: true);
+    final natural = c.size.height;
+    if (!_maxHeight.isFinite || _maxHeight <= 0 || natural <= _maxHeight) {
+      scale = 1;
+      _dx = 0;
+      size = constraints.constrain(Size(w, natural));
+      return;
+    }
+    var s = _maxHeight / natural;
+    c.layout(BoxConstraints.tightFor(width: w / s), parentUsesSize: true);
+    final wide = c.size.height;
+    if (wide * s > _maxHeight) s = _maxHeight / wide;
+    scale = s;
+    _dx = (w - c.size.width * s) / 2;
+    size = constraints.constrain(Size(w, math.min(_maxHeight, c.size.height * s)));
+  }
+
+  @override
+  Size computeDryLayout(BoxConstraints constraints) => constraints.constrain(
+    Size(
+      constraints.maxWidth.isFinite ? constraints.maxWidth : 0,
+      _maxHeight.isFinite ? _maxHeight : 0,
+    ),
+  );
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final c = child;
+    if (c == null) return;
+    if (scale == 1 && _dx == 0) {
+      context.paintChild(c, offset);
+    } else {
+      layer = context.pushTransform(
+        needsCompositing,
+        offset,
+        _transform,
+        (ctx, o) => ctx.paintChild(c, o),
+        oldLayer: layer is TransformLayer ? layer! as TransformLayer : null,
+      );
+      return;
+    }
+    layer = null;
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    final c = child;
+    if (c == null) return false;
+    return result.addWithPaintTransform(
+      transform: _transform,
+      position: position,
+      hitTest: (r, p) => c.hitTest(r, position: p),
+    );
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) => transform.multiply(_transform);
+}

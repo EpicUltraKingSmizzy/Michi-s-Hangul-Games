@@ -16,6 +16,7 @@ import 'package:hangul_hooray/screens/pack_stats_screen.dart';
 import 'package:hangul_hooray/screens/shuffle_games_screen.dart';
 import 'package:hangul_hooray/screens/stats_screen.dart';
 import 'package:hangul_hooray/widgets/app_frame.dart';
+import 'package:hangul_hooray/widgets/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 VocabEntry _w(String ko, String en, [String emoji = '']) =>
@@ -110,6 +111,87 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 3));
     });
+  }
+
+  // Desktop browser windows of every shape, phones and split view.
+  const windows = [
+    Size(560, 700),
+    Size(600, 800),
+    Size(800, 600),
+    Size(1000, 900),
+    Size(1920, 1000),
+    Size(1280, 650),
+    Size(700, 1200),
+    Size(412, 915),
+    Size(360, 640),
+    Size(412, 420),
+    Size(300, 500),
+    Size(240, 900),
+  ];
+  for (final step in [AppState.defaultButtonFont, 3]) {
+    for (final size in windows) {
+      testWidgets(
+        'game buttons fully on screen, no scrolling, at ${size.width}x${size.height} font $step',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.reset);
+          SharedPreferences.setMockInitialValues({
+            AppState.kVibration: false,
+            AppState.kButtonFont: step,
+          });
+          await tester.runAsync(appState.load);
+          final window = (Offset.zero & size).inflate(0.5);
+          final verbs = appState.engine.verbWords;
+
+          Future<void> check(String name, Widget screen) async {
+            await tester.pumpWidget(_framed(KeyedSubtree(key: UniqueKey(), child: screen)));
+            await tester.pump();
+            await tester.pump(const Duration(milliseconds: 500));
+            expect(tester.takeException(), isNull, reason: name);
+            for (final label in ['➡️', '↩️']) {
+              final b = find.ancestor(of: find.text(label), matching: find.byType(BouncyButton));
+              expect(b, findsOneWidget, reason: '$name $label');
+              final r = tester.getRect(b);
+              expect(
+                window.contains(r.topLeft) && window.contains(r.bottomRight),
+                isTrue,
+                reason: '$name: $label at $r is outside the window $size',
+              );
+            }
+            final body = find.byKey(const ValueKey('round_body'));
+            if (body.evaluate().isNotEmpty) {
+              final r = tester.getRect(body);
+              expect(r.bottom, lessThanOrEqualTo(size.height + 0.5), reason: '$name body $r');
+              final scroll = tester.state<ScrollableState>(
+                find.ancestor(of: body, matching: find.byType(Scrollable)).first,
+              );
+              expect(
+                scroll.position.maxScrollExtent,
+                lessThanOrEqualTo(0.5),
+                reason: '$name scrolls',
+              );
+            }
+          }
+
+          for (var g = 1; g <= GameEngine.gameCount; g++) {
+            for (final seed in [g, g + 20]) {
+              appState.engine =
+                  GameEngine([
+                      ..._words,
+                      if (g == GameEngine.sentenceGame) ...verbs.values,
+                    ], random: Random(seed))
+                    ..sentenceBank = appState.sentenceBank
+                    ..verbWords = verbs;
+              await check('game $g seed $seed', GameScreen(game: g));
+            }
+          }
+          await check('shuffle', const GameScreen.shuffle());
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 3));
+        },
+      );
+    }
   }
 
   testWidgets('a shrunk app still takes taps where they are drawn', (tester) async {

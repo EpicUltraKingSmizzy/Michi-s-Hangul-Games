@@ -253,7 +253,8 @@ class _GameScreenState extends State<GameScreen> {
     _streak.hit();
     unawaited(appState.recordStreak(widget.shuffle ? 0 : _game, _streak.count));
     if (appState.vibration) Buzz.right();
-    _confetti.play();
+    // 💼 Business mode: no confetti.
+    if (!appState.businessMode) _confetti.play();
     setState(() {
       _locked = true;
       _cheer = appState.showStreak && _streak.isMilestone
@@ -509,24 +510,25 @@ class _GameScreenState extends State<GameScreen> {
                   ? _noVerbPacks()
                   : _notEnoughWords(),
             ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confetti,
-                blastDirectionality: BlastDirectionality.explosive,
-                numberOfParticles: 30,
-                emissionFrequency: 0.08,
-                gravity: 0.25,
-                colors: const [
-                  Color(0xFFFF5C8A),
-                  Color(0xFFFF9F1C),
-                  Color(0xFF2EC4B6),
-                  Color(0xFF7B5CFF),
-                  Color(0xFFFFE600),
-                  Color(0xFF3DDC84),
-                ],
+            if (!appState.businessMode)
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confetti,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  numberOfParticles: 30,
+                  emissionFrequency: 0.08,
+                  gravity: 0.25,
+                  colors: const [
+                    Color(0xFFFF5C8A),
+                    Color(0xFFFF9F1C),
+                    Color(0xFF2EC4B6),
+                    Color(0xFF7B5CFF),
+                    Color(0xFFFFE600),
+                    Color(0xFF3DDC84),
+                  ],
+                ),
               ),
-            ),
             if (_cheer != null)
               Positioned(
                 top: 8,
@@ -690,22 +692,37 @@ class _GameScreenState extends State<GameScreen> {
     final r = _round!;
     if (r is LinkRound) return _linkBody(r);
 
-    return ListView(
-      key: ValueKey(_roundId),
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
-      children: [
-        if (widget.shuffle) _shuffleBanner(),
-        if (r is ColorRound)
-          ..._colorBody(r)
-        else if (r is TimeRound)
-          ..._timeBody(r)
-        else if (r is ChoiceRound)
-          ..._choice(r)
-        else if (r is SentenceRound)
-          ..._sentenceBody(r)
-        else
-          ..._typing(r as TypingRound),
-      ],
+    // The whole round, down to the ➡️ ↩️ 💡 row, shrinks to fit the window
+    // height instead of scrolling. With the on-screen keyboard up it keeps
+    // the size it had without it and scrolls.
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        key: ValueKey(_roundId),
+        child: FitToHeight(
+          maxHeight: box.maxHeight + MediaQuery.viewInsetsOf(context).bottom,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+            child: Column(
+              key: const ValueKey('round_body'),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.shuffle) _shuffleBanner(),
+                if (r is ColorRound)
+                  ..._colorBody(r)
+                else if (r is TimeRound)
+                  ..._timeBody(r)
+                else if (r is ChoiceRound)
+                  ..._choice(r)
+                else if (r is SentenceRound)
+                  ..._sentenceBody(r)
+                else
+                  ..._typing(r as TypingRound),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

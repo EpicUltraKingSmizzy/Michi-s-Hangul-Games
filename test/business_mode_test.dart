@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -177,4 +178,44 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 3));
   });
+
+  for (final business in [false, true]) {
+    testWidgets(
+      'victory confetti ${business ? 'off' : 'on'} with Business mode ${business ? 'on' : 'off'}',
+      (tester) async {
+        await _load(tester, business: business);
+        for (final shuffle in [false, true]) {
+          appState.engine = GameEngine(_words, random: Random(3));
+          await tester.pumpWidget(
+            MaterialApp(
+              home: shuffle
+                  ? GameScreen.shuffle(key: UniqueKey())
+                  : GameScreen(key: UniqueKey(), game: 1),
+            ),
+          );
+          await tester.pump();
+          expect(find.byType(ConfettiWidget), business ? findsNothing : findsOneWidget);
+          if (shuffle) continue;
+          // Tap the answers in turn until one wins.
+          final winsBefore = appState.sessionWins[1] ?? 0;
+          var played = false;
+          for (var i = 0; i < 3 && !played; i++) {
+            await tester.tap(find.byKey(ValueKey('option_text_$i')));
+            await tester.pump(const Duration(milliseconds: 50));
+            final c = find.byType(ConfettiWidget);
+            played =
+                c.evaluate().isNotEmpty &&
+                tester.widget<ConfettiWidget>(c).confettiController.state ==
+                    ConfettiControllerState.playing;
+            if (business) expect(c, findsNothing, reason: 'no confetti after a win');
+          }
+          if (business) await tester.pump(const Duration(milliseconds: 50));
+          expect(appState.sessionWins[1] ?? 0, winsBefore + 1, reason: 'a round was won');
+          expect(played, !business);
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 3));
+        }
+      },
+    );
+  }
 }
