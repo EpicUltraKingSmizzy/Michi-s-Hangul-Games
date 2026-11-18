@@ -24,10 +24,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late final AnimationController _wiggle = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    appState.addListener(_syncWiggle);
+    _syncWiggle();
+  }
+
+  /// 💼 Business mode keeps the 🇰🇷 still.
+  void _syncWiggle() {
+    if (appState.businessMode) {
+      if (_wiggle.isAnimating) _wiggle.stop();
+      _wiggle.value = 0.5;
+    } else if (!_wiggle.isAnimating) {
+      _wiggle.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
+    appState.removeListener(_syncWiggle);
     _wiggle.dispose();
     super.dispose();
   }

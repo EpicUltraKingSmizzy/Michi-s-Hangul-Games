@@ -11,6 +11,7 @@ import '../logic/play_helpers.dart';
 import '../main.dart';
 import '../models/vocab_entry.dart';
 import '../widgets/number_help.dart';
+import '../widgets/app_frame.dart';
 import '../widgets/common.dart';
 import 'options_screen.dart';
 import '../widgets/emoji_peek.dart';

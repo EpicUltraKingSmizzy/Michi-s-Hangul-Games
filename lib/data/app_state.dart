@@ -30,6 +30,9 @@ class AppState extends ChangeNotifier {
   static const kUseEmoji = 'opt_use_emoji';
   static const kShowBracketNotes = 'opt_show_bracket_notes';
 
+  /// 💼 Business mode: the whole app in greyscale (default off).
+  static const kBusinessMode = 'opt_business_mode';
+
   /// 📦 Word Pack Stats: day -> pack id -> wins, and every word (section
   /// name) that has been the word of a won round.
   static const kPackWins = 'pack_wins_by_day';
@@ -126,6 +129,10 @@ class AppState extends ChangeNotifier {
   /// ⚙️ Options 📑 Bracket notes: show "Car (vehicle)" (true) or just "Car".
   bool showBracketNotes = false;
 
+  /// 💼 Business mode: everything greyscale except the colors being matched
+  /// in 🎨 Color Match, and the home screen emojis keep still.
+  bool businessMode = false;
+
   /// ⌚ Digital time: show '5:05' under the 🕒 clock.
   bool showDigitalTime = true;
 
@@ -169,6 +176,7 @@ class AppState extends ChangeNotifier {
     spokenAnswer = _prefs.getBool(kSpokenAnswer) ?? true;
     useEmoji = _prefs.getBool(kUseEmoji) ?? true;
     showBracketNotes = _prefs.getBool(kShowBracketNotes) ?? false;
+    businessMode = _prefs.getBool(kBusinessMode) ?? false;
     showDigitalTime = _prefs.getBool(kShowDigitalTime) ?? true;
     digitalPromptShown = _prefs.getBool(kDigitalPromptShown) ?? false;
     buttonFont = (_prefs.getInt(kButtonFont) ?? defaultButtonFont).clamp(0, 3);
@@ -370,6 +378,8 @@ class AppState extends ChangeNotifier {
     showBracketNotes = v;
     engine.showBracketNotes = v;
   });
+
+  Future<void> setBusinessMode(bool v) => _setOption(kBusinessMode, v, () => businessMode = v);
 
   Future<void> markDigitalPromptShown() async {
     digitalPromptShown = true;

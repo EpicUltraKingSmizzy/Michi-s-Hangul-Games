@@ -41,6 +41,14 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    // Let Ctrl + mouse wheel (and trackpad pinch) zoom the page like any
+    // other website. Flutter would otherwise take it as an in-app zoom
+    // gesture and block the browser's zoom.
+    window.addEventListener('wheel', function (e) {
+      if (e.ctrlKey) e.stopImmediatePropagation();
+    }, { capture: true, passive: true });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

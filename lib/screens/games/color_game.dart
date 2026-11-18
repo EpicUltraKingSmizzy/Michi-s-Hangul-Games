@@ -18,7 +18,6 @@ extension _ColorGame on _GameScreenState {
     }
   }
 
-
   /// 9️⃣: either a box painted in the colour with Korean-name buttons, or a
   /// Korean name with colour buttons. No English or emoji in the round itself,
   /// except the English a tap on the colour box peeks at. The colour buttons
@@ -63,13 +62,18 @@ extension _ColorGame on _GameScreenState {
 
   /// The colour prompt; a tap peeks at its English name (like an emoji
   /// prompt), which never affects wins or the streak.
-  Widget _colorBox(GameColor c) => ColorPeek(
-    color: Color(c.argb),
-    english: appState.displayEnglish(c.english),
-    darkText: c.wantsDarkText,
-    outlined: c.isLight,
-    showEnglish: _peek,
-    onTap: () => _update(() => _peek = !_peek),
+  /// 💼 Business mode keeps the colour itself in colour (not the margin).
+  Widget _colorBox(GameColor c) => KeepColor(
+    outset: const EdgeInsets.only(top: -34, bottom: -8),
+    radius: 28,
+    child: ColorPeek(
+      color: Color(c.argb),
+      english: appState.displayEnglish(c.english),
+      darkText: c.wantsDarkText,
+      outlined: c.isLight,
+      showEnglish: _peek,
+      onTap: () => _update(() => _peek = !_peek),
+    ),
   );
 
   /// A solid colour button; a ✓ / ✗ mark (icons, not text) shows the result
@@ -83,21 +87,26 @@ extension _ColorGame on _GameScreenState {
       borderColor: c.isLight ? Colors.black38 : null,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       onTap: () => _onColor(r, i),
-      child: SizedBox(
-        height: 48,
-        child: state == null
-            ? null
-            : Center(
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    state == _green ? Icons.check_rounded : Icons.close_rounded,
-                    color: state,
-                    size: 34,
+      // 💼 Business mode keeps the button face (inside padding + edge) in colour.
+      child: KeepColor(
+        outset: const EdgeInsets.symmetric(horizontal: 23, vertical: 15),
+        radius: 22,
+        child: SizedBox(
+          height: 48,
+          child: state == null
+              ? null
+              : Center(
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      state == _green ? Icons.check_rounded : Icons.close_rounded,
+                      color: state,
+                      size: 34,
+                    ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }

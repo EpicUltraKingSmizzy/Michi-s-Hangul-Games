@@ -78,6 +78,15 @@ class OptionsScreen extends StatelessWidget {
                 color: const Color(0xFFFFB703),
                 onChanged: appState.setShowBracketNotes,
               ),
+              _OptionCard(
+                key: const ValueKey('opt_business_mode'),
+                emoji: '💼',
+                title: 'Business mode',
+                blurb: 'No silly colors.',
+                value: appState.businessMode,
+                color: const Color(0xFF5C677D),
+                onChanged: appState.setBusinessMode,
+              ),
               _SliderCard(
                 key: const ValueKey('opt_button_font'),
                 emoji: '🔠',

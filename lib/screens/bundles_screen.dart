@@ -18,18 +18,22 @@ class BundlesScreen extends StatelessWidget {
         listenable: appState,
         builder: (context, _) => Scaffold(
           appBar: AppBar(
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('📦 Word Packs'),
-                const SizedBox(width: 10),
-                // Master switch: every built-in and user pack (never My Words).
-                Switch(
-                  key: const ValueKey('all_packs'),
-                  value: appState.allPacksOn,
-                  onChanged: appState.setAllPacks,
-                ),
-              ],
+            // Shrinks to fit a narrow window.
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('📦 Word Packs'),
+                  const SizedBox(width: 10),
+                  // Master switch: every built-in and user pack (never My Words).
+                  Switch(
+                    key: const ValueKey('all_packs'),
+                    value: appState.allPacksOn,
+                    onChanged: appState.setAllPacks,
+                  ),
+                ],
+              ),
             ),
           ),
           body: ListView(

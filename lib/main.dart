@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'data/app_state.dart';
 import 'screens/home_screen.dart';
+import 'widgets/app_frame.dart';
 import 'widgets/common.dart';
 
 final AppState appState = AppState();
@@ -55,6 +56,11 @@ class HangulHoorayApp extends StatelessWidget {
           fillColor: Colors.white,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
         ),
+      ),
+      builder: (context, child) => ListenableBuilder(
+        listenable: appState,
+        builder: (context, _) =>
+            AppFrame(businessMode: appState.businessMode, child: child ?? const SizedBox()),
       ),
       home: const HomeScreen(),
     );
