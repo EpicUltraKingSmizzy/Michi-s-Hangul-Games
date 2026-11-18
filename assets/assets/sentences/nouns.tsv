@@ -1,0 +1,405 @@
+# Nouns for 🏗️ Sentence Builder and verb sentences in the other games.
+# One line per built-in word that sentences may use (untagged words are never used;
+# words the player adds never are either). Columns (tab-separated):
+#   korean  pack  kinds  english  general  at  to  tags
+# korean: the word's Korean1 or Korean2; pack: its home Word Pack.
+# kinds: what the word can be in a sentence; verbs.ini picks nouns by kind or by name.
+# english: the noun as used in an English sentence ("an apple", "the library", "{my} hands").
+# general: the form for habits and likes, used in the present tense ("apples"); blank = same.
+# at / to: where-phrases ("in the park", "home"); blank = "at <english>" / "to <english>".
+# tags: pl = plural (as a subject); he / she = only with a male / female owner ("my wife").
+# {my} and {self} follow the subject (my/his/her/their, myself/himself/...).
+개	animals	pet,wild	a dog	dogs			
+개구리	animals	wild	a frog	frogs			
+고양이	animals	pet,wild	a cat	cats			
+곰	animals	wild	a bear	bears			
+농장	animals	place	the farm		on the farm		
+다람쥐	animals	wild	a squirrel	squirrels			
+닭	animals	pet	a chicken	chickens			
+돼지	animals	pet	a pig	pigs			
+말	animals	pet	a horse	horses			
+물고기	animals	catch,pet	a fish	fish			
+뱀	animals	wild	a snake	snakes			
+사자	animals	wild	a lion	lions			
+새	animals	pet	a bird	birds			
+소	animals	pet	a cow	cows			
+양	animals	pet	a sheep	sheep			
+오리	animals	pet	a duck	ducks			
+원숭이	animals	wild	a monkey	monkeys			
+코끼리	animals	wild	an elephant	elephants			
+토끼	animals	pet,wild	a rabbit	rabbits			
+호랑이	animals	wild	a tiger	tigers			
+가치	big-brain-ideas	realize	the value				
+경험	big-brain-ideas	gain	experience				
+글	big-brain-ideas	writable	a piece of writing				
+기억	big-brain-ideas	lose	{my} memory				
+기회	big-brain-ideas	catch,gain,lose	the chance				
+내용	big-brain-ideas	info,understand	the content				
+도움	big-brain-ideas	gain,job,want	help				
+뜻	big-brain-ideas	info,lookup,understand	the meaning				
+목표	big-brain-ideas	plan	a goal	goals			
+사실	big-brain-ideas	believe,info,news,realize	the truth				
+소식	big-brain-ideas	news	the news				
+의견	big-brain-ideas	share	an opinion	opinions			
+의미	big-brain-ideas	info,realize,understand	the meaning				
+이름	big-brain-ideas	build,change,info,plan,writable	{my} name				
+이유	big-brain-ideas	info	the reason				
+자신	big-brain-ideas	believe	{self}				
+정보	big-brain-ideas	collect,gain,info,lookup,share	information				
+질문	big-brain-ideas	avoid,question,understand	the question	questions			
+가격	big-words	check,fall,info,lookup,rise	the price				
+값	big-words	fall,rise	the price				
+경제	big-words	subject	economics				
+나라	big-words	home_region,protect	the country				
+법	big-words	protect	the law				
+사고	big-words	avoid,block	an accident	accidents			
+선거	big-words	contest	the election				
+세상	big-words	changes	the world				
+신	big-words	believe	God				
+자유	big-words	want	freedom				
+고개	body	move_body	{my} head				
+귀	body	block	{my} ears				pl
+다리	body	move_body	{my} legs				pl
+머리	body	move_body	{my} head				
+머리카락	body	cut,grow	{my} hair				
+몸	body	move_body,wash	{my} body				
+발	body	move_body,wash	{my} feet				pl
+발가락	body	move_body	{my} toes				pl
+손	body	catch,move_body,wash	{my} hands				pl
+손가락	body	move_body	{my} fingers				pl
+어깨	body	move_body	{my} shoulders				pl
+얼굴	body	draw,wash,wipe	{my} face				
+이	body	wipe	{my} teeth				pl
+입	body	block	{my} mouth				
+팔	body	move_body	{my} arms				pl
+갈색	colours	colour	brown				
+검은색	colours	colour	black				
+노란색	colours	colour	yellow				
+보라색	colours	colour	purple				
+분홍색	colours	colour	pink				
+빨간색	colours	colour	red				
+색깔	colours	changes	the color				
+주황색	colours	colour	orange				
+초록색	colours	colour	green				
+파란색	colours	colour	blue				
+하늘색	colours	colour	sky blue				
+하얀색	colours	colour	white				
+회색	colours	colour	grey				
+사랑	emotions	feel,want	love				
+스트레스	emotions	feel	stress				
+울음	emotions	endure	crying				
+웃음	emotions	endure	{my} laughter				
+가지	food	slice	an eggplant	eggplants			
+간장	food	season	soy sauce				
+갈비	food	food	galbi				
+감자	food	food,slice	a potato	potatoes			
+계란찜	food	food,make	gyeran-jjim				
+고추	food	season,slice	a pepper	peppers			
+고추장	food	season	red pepper paste				
+국	food	food	soup			to the soup	
+국수	food	food	noodles				pl
+김밥	food	food,make	kimbap				
+김치	food	food,make,season,slice	kimchi				
+김치찌개	food	food	kimchi-jjigae				
+냉면	food	food	naengmyeon				
+닭갈비	food	food	dak-galbi				
+당근	food	slice	a carrot	carrots			
+딸기	food	food,wash	strawberries				pl
+땅콩	food	food	peanuts				pl
+떡볶이	food	food,make	tteokbokki				
+마늘	food	season,slice	garlic				
+망고	food	food	a mango	mangoes			
+맥주	food	drink	beer				
+멜론	food	food	a melon	melons			
+물	food	drink	water				
+바나나	food	food	a banana	bananas			
+반찬	food	food	side dishes				pl
+밥	food	build,food	rice				
+버섯	food	slice	mushrooms				pl
+복숭아	food	food	a peach	peaches			
+부리토	food	food	a burrito	burritos			
+불고기	food	food	bulgogi				
+사과	food	fall,food,wash	an apple	apples			
+삼겹살	food	food	samgyeopsal				
+상추	food	slice,wash	lettuce				
+샌드위치	food	food,make	a sandwich	sandwiches			
+수박	food	cut,food,slice	a watermelon	watermelons			
+순두부찌개	food	food	sundubu-jjigae				
+술	food	drink	alcohol				
+스무디	food	drink	a smoothie	smoothies			
+아이스크림	food	food	ice cream				
+양파	food	season,slice	an onion	onions			
+오렌지	food	food	an orange	oranges			
+오이	food	food,season,slice	a cucumber	cucumbers			
+옥수수	food	food	corn				
+와인	food	drink	wine				
+우유	food	drink	milk				
+음료	food	drink	a drink	drinks			
+음식	food	food,make,prep,share,trash	food				
+잡채	food	food	japchae				
+점심	food	prep	lunch				
+주스	food	drink	juice				
+짜장면	food	food	jjajangmyeon				
+찌개	food	food	stew			to the stew	
+차	food	drink	tea				
+참기름	food	season	sesame oil				
+체리	food	food	cherries				pl
+초밥	food	food	sushi				
+초콜릿	food	food,gift	chocolate				
+커피	food	drink	coffee				
+타코	food	food	a taco	tacos			
+탄산음료	food	drink	soda				
+토마토	food	food,slice,wash	a tomato	tomatoes			
+파	food	season,slice	green onions				pl
+파인애플	food	food	a pineapple	pineapples			
+포도	food	food,wash	grapes				pl
+피자	food	cut,food,make,share	pizza				
+해물파전	food	food	haemul-pajeon				
+햄버거	food	food	a hamburger	hamburgers			
+과학	grabbag	subject	science				
+구두	grabbag	gear,wipe	dress shoes				pl
+꽃	grabbag	draw,gift,grow,plant	flowers				pl
+나무	grabbag	draw,grow,plant	a tree	trees			
+뉴스	grabbag	listen,news,text,watch	the news				
+달	grabbag	spin	the moon				
+답	grabbag	check,info	the answer				
+문제	grabbag	avoid,understand	the problem	problems			
+박수	grabbag	hit	applause				
+비빔밥	grabbag	food	bibimbap				
+생각	grabbag	change,changes	{my} mind				
+식물	grabbag	grow,plant	a plant	plants			
+앱	grabbag	make,openable,service,tool	an app	apps			
+역사	grabbag	subject	history				
+잎	grabbag	fall	the leaves				pl
+젓가락	grabbag	tool	chopsticks				pl
+충전기	grabbag	thing	a charger				
+편의점	grabbag	indoor,place	the convenience store				
+힘	grabbag	gain,lose	strength				
+건강	heart-and-body	lose,protect	{my} health				
+고통	heart-and-body	endure,feel	the pain				
+눈물	heart-and-body	endure,fall	{my} tears				pl
+마음	heart-and-body	changes,news,understand	{my} feelings				pl
+목소리	heart-and-body	listen	a voice				
+분위기	heart-and-body	changes	the mood				
+삶	heart-and-body	enjoy	life				
+시선	heart-and-body	avoid	eye contact				
+건물	here-there-everywhere	build,indoor	a building	buildings			
+고향	here-there-everywhere	home_region,place	{my} hometown		in {my} hometown		
+공장	here-there-everywhere	activity_place,build,place,workplace	a factory	factories	at the factory	to the factory	
+동네	here-there-everywhere	home_region,place	the neighborhood		in the neighborhood		
+뒤	here-there-everywhere	direction,position	the back		at the back	to the back	
+마을	here-there-everywhere	home_region,path,place	the village		in the village		
+밑	here-there-everywhere	direction	the bottom		underneath	down	
+밖	here-there-everywhere	activity_place	outside		outside	outside	
+방	here-there-everywhere	activity_place,indoor,place	{my} room		in {my} room		
+방향	here-there-everywhere	plan	the direction				
+시설	here-there-everywhere	service	the facilities				pl
+아래	here-there-everywhere	direction	below		below	down	
+아파트	here-there-everywhere	build,indoor,place	an apartment	apartments	in an apartment		
+앞	here-there-everywhere	direction,position	the front		in front	to the front	
+옆	here-there-everywhere	position	the side		at the side	to the side	
+외국	here-there-everywhere	place	another country		abroad	abroad	
+위	here-there-everywhere	direction	the top		up there	up	
+자리	here-there-everywhere	change,spot	{my} seat				
+노트북	home	thing,tool	a laptop	laptops			
+리모컨	home	thing	the remote				
+마우스	home	tool	a mouse				
+메달	home	collect,gift	a medal	medals			
+메시지	home	check,news,question,send,text,writable	a message	messages			
+모자	home	gear	a hat				
+문	home	block,openable	the door				
+문서	home	text	a document	documents			
+바지	home	clothes	pants				pl
+블로그	home	text,writable	a blog	blogs			
+사진	home	collect,gift,hang,send,watch	a photo	photos			
+셔츠	home	clothes	a shirt				
+손목시계	home	thing	a watch				
+쇼	home	watch	a show	shows			
+시계	home	thing	a clock				
+신문	home	text,trash	the newspaper				
+신발	home	gear	shoes				pl
+안경	home	gear,thing,wipe	glasses				pl
+연필	home	thing	a pencil				
+열쇠	home	thing	a key				
+오토바이	home	vehicle	a motorbike				
+옷	home	clothes,hang,trash	clothes				pl
+이메일	home	check,question,send,text,writable	an email	emails			
+인터넷	home	service,tool	the internet				
+자동차	home	big_thing,vehicle	a car				
+자전거	home	big_thing,vehicle	a bike				
+전화	home	hang,question	the phone				
+접시	home	wipe	the plate		on the plate		
+종이	home	cut,thing,trash	paper				
+집	home	activity_place,build,draw,home_region,indoor,job,lookup,place	the house		at home	home	
+창문	home	openable,wipe	the window				
+책	home	gift,text,thing	a book	books			
+침대	home	big_thing,spot	the bed		on the bed		
+카메라	home	thing,tool	a camera				
+칼	home	tool	a knife				
+컴퓨터	home	big_thing,tool	the computer				
+코트	home	clothes	a coat				
+키보드	home	tool	a keyboard				
+텔레비전	home	big_thing,watch	the TV				
+트로피	home	gift	a trophy				
+티셔츠	home	clothes	a T-shirt				
+파일	home	openable	the file				
+포스터	home	hang	a poster				
+프린터	home	tool	the printer				
+핸드폰	home	change,thing,tool	a phone				
+헤드폰	home	thing	headphones				pl
+현금	home	thing	cash				
+결과	how-things-are	check,news	the results				pl
+방법	how-things-are	change,info,lookup	the way				
+변화	how-things-are	feel,want	a change	change			
+소리	how-things-are	listen	a sound	sounds			
+차이	how-things-are	feel	the difference				
+가게	outside	activity_place,indoor,openable,place,workplace	the store				
+거리	outside	path	the street		on the street		
+경찰서	outside	place	the police station				
+골프	outside	hit,skill,sport	golf				
+공원	outside	activity_place,path,place	the park		in the park		
+공항	outside	place	the airport				
+기차	outside	vehicle	the train				
+날씨	outside	changes,check,info	the weather				
+농구	outside	skill,sport	basketball				
+다리	outside	path	the bridge		on the bridge		
+도서관	outside	activity_place,indoor,place,service	the library				
+도시	outside	home_region,place	the city		in the city		
+드라마	outside	watch	a drama	dramas			
+맛집	outside	lookup,place	a good restaurant	good restaurants			
+박물관	outside	indoor,place	the museum				
+배구	outside	sport	volleyball				
+버스	outside	service,vehicle	the bus				
+병원	outside	activity_place,indoor,place,workplace	the hospital				
+보트	outside	vehicle	a boat				
+볼링	outside	hit,sport	bowling				
+비행기	outside	vehicle	a plane				
+쇼핑	outside	activity,enjoy	shopping				
+스키	outside	skill,sport	skiing				
+스포츠	outside	enjoy	sports				
+시장	outside	activity_place,path,place	the market				
+식당	outside	activity_place,indoor,place,workplace	the restaurant				
+야구	outside	skill,sport	baseball				
+약국	outside	place	the pharmacy				
+역	outside	indoor,path,place	the station				
+영화	outside	enjoy,event,make,watch	a movie	movies			
+영화관	outside	indoor,place	the movie theater				
+우체국	outside	place,workplace	the post office				
+은행	outside	activity_place,indoor,place,service,workplace	the bank				
+음악	outside	enjoy,listen,subject	music				
+지구	outside	spin	the earth				
+지하철	outside	service,vehicle	the subway				
+축구	outside	skill,sport	soccer				
+카페	outside	activity_place,indoor,place,workplace	the café				
+콘서트	outside	event,place	the concert				
+택시	outside	catch,service,vehicle	a taxi				
+테니스	outside	hit,skill,sport	tennis				
+학교	outside	activity_place,build,indoor,path,place,workplace	school		at school	to school	
+호텔	outside	activity_place,indoor,place,workplace	the hotel				
+가족	people	lose,person,protect	{my} family				
+남동생	people	peer,person	{my} younger brother				
+남편	people	person	{my} husband				she
+누나	people	person	{my} older sister				he
+동생	people	peer,person	{my} younger sibling				
+딸	people	person	{my} daughter				
+부모님	people	person	{my} parents				pl
+아기	people	grow,peer,person	the baby	babies			
+아내	people	person	{my} wife				he
+아들	people	person	{my} son				
+아버지	people	person	{my} father				
+아빠	people	person	{my} dad				
+어머니	people	person	{my} mother				
+엄마	people	person	{my} mom				
+여동생	people	peer,person	{my} younger sister				
+할머니	people	person	{my} grandmother				
+할아버지	people	person	{my} grandfather				
+형	people	person	{my} older brother				he
+계획	school-and-hustle	change,plan	{my} plans				pl
+공부	school-and-hustle	activity,skill	studying				
+교수	school-and-hustle	person	the professor				
+기술	school-and-hustle	subject	technology				
+대학	school-and-hustle	place,workplace	college		at college	to college	
+사장	school-and-hustle	person	the boss				
+선배	school-and-hustle	person	{my} senior				
+선생님	school-and-hustle	person	the teacher				
+수업	school-and-hustle	activity,event,listen,prep	the class	classes			
+시험	school-and-hustle	event,prep	the test	tests			
+언어	school-and-hustle	subject	languages				
+영어	school-and-hustle	skill,subject	English				
+일	school-and-hustle	activity,event,job,skill	work				
+임금	school-and-hustle	rise	wages				pl
+자료	school-and-hustle	collect	materials				pl
+지식	school-and-hustle	gain	knowledge				
+직장	school-and-hustle	activity_place,place,workplace	work		at work	to work	
+학생	school-and-hustle	peer,person	a student	students			
+회사	school-and-hustle	activity_place,home_region,indoor,place,workplace	the company		at the company	to work	
+회의	school-and-hustle	activity,event,prep	the meeting	meetings			
+경기	showtime	contest,event,watch	the game	games			
+공	showtime	catch,fall,hit	the ball				
+공연	showtime	event,watch	the show	shows			
+그림	showtime	draw,sport,watch	a picture	pictures			
+노래	showtime	listen,make,skill,sport	a song	songs			
+대회	showtime	contest	the competition				
+무대	showtime	height,spot	the stage		on the stage		
+문학	showtime	subject	literature				
+방송	showtime	listen	the broadcast				
+소설	showtime	text,writable	a novel	novels			
+시	showtime	build,text,writable	a poem	poems			
+여행	showtime	activity,enjoy,prep	a trip	trips			
+연극	showtime	watch	a play	plays			
+예술	showtime	subject	art				
+운동	showtime	activity,enjoy,skill,sport	exercise				
+인기	showtime	gain	popularity				
+편지	showtime	gift,news,send,text,writable	a letter	letters			
+프로그램	showtime	make	a program	programs			
+고기	stuff-and-nature	cut,food,slice	meat				
+땅	stuff-and-nature	spot	the ground		on the ground		
+물건	stuff-and-nature	big_thing,trash	things				pl
+바다	stuff-and-nature	activity_place,place,watch	the sea		at the beach	to the beach	
+바람	stuff-and-nature	block,feel	the wind				
+비	stuff-and-nature	avoid,block,fall	the rain				
+산	stuff-and-nature	height,place	the mountain		in the mountains	to the mountains	
+숲	stuff-and-nature	path	the forest		in the forest		
+식사	stuff-and-nature	prep	a meal	meals			
+쓰레기	stuff-and-nature	collect,trash	the trash				
+자연	stuff-and-nature	protect	nature				
+하늘	stuff-and-nature	draw,watch	the sky				
+환경	stuff-and-nature	protect	the environment				
+겨울	tick-tock	time_e,time_span	winter		in winter		
+봄	tick-tock	time_e,time_span	spring		in spring		
+새벽	tick-tock	time_e	dawn		at dawn		
+세월	tick-tock	time_span	the years				pl
+여름	tick-tock	time_e,time_span	summer		in summer		
+오후	tick-tock	time_e	the afternoon		in the afternoon		
+올해	tick-tock	time_bare	this year				
+요즘	tick-tock	time_bare	these days				
+작년	tick-tock	time_bare	last year				
+하루	tick-tock	event,time_span	the day				
+금요일	time	time_e	Friday		on Friday		
+내일	time	time_bare	tomorrow				
+목요일	time	time_e	Thursday		on Thursday		
+밤	time	time_e	the night		at night		
+수요일	time	time_e	Wednesday		on Wednesday		
+시간	time	check,info,plan,time_span	the time				
+아침	time	time_e	the morning		in the morning		
+약속	time	protect	{my} promise				
+어제	time	time_bare	yesterday				
+오늘	time	time_bare	today				
+월요일	time	time_e	Monday		on Monday		
+일요일	time	time_e	Sunday		on Sunday		
+저녁	time	prep,time_e	dinner		in the evening		
+주말	time	enjoy,time_e,time_span	the weekend		on the weekend		
+지금	time	time_bare	now				
+토요일	time	time_e	Saturday		on Saturday		
+화요일	time	time_e	Tuesday		on Tuesday		
+경찰	whos-who	person	the police				pl
+사람	whos-who	changes,person	a person	people			
+손님	whos-who	person	a guest	guests			
+아이	whos-who	grow,peer,person	the child	children			
+이웃	whos-who	person	a neighbor	neighbors			
+친구	whos-who	peer,person	a friend	friends			
+돈	home	thing,earn	money				
+요리	food	skill,make	cooking				
+수영	outside	sport,skill	swimming				
+선물	stuff-and-nature	gift	a gift	gifts			
+이야기	showtime	share,listen	a story	stories			
